@@ -1,0 +1,1 @@
+from neural_map_envs.envs.two_indicators_goals_dimensions import Two_Goals_Indicators_Dimensions
