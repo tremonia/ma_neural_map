@@ -1,0 +1,6 @@
+FROM tensorflow/tensorflow:1.15.4-gpu-py3
+MAINTAINER tobias.weber@tu-dortmund.de
+
+RUN apt-get install -y libgl1-mesa-dev
+
+RUN pip install gym==0.15.7
