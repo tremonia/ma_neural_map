@@ -34,13 +34,13 @@ class Model(object):
         with tf.variable_scope('ppo2_model', reuse=tf.AUTO_REUSE):
             # CREATE OUR TWO MODELS
             # act_model that is used for sampling
-            act_model = policy(nbatch_act, 1, sess)
+            act_model = policy(nbatch_act, 1, sess, use_nm_customization=True)
             
             # Train model for training
             if microbatch_size is None:
-                train_model = policy(nbatch_train, nsteps, sess)
+                train_model = policy(nbatch_train, nsteps, sess, use_nm_customization=True)
             else:
-                train_model = policy(microbatch_size, nsteps, sess)
+                train_model = policy(microbatch_size, nsteps, sess, use_nm_customization=True)
 
         # CREATE THE PLACEHOLDERS
         self.A = A = train_model.pdtype.sample_placeholder([None])
