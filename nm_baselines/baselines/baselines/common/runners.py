@@ -8,6 +8,7 @@ class AbstractEnvRunner(ABC):
         self.nenv = nenv = env.num_envs if hasattr(env, 'num_envs') else 1
         self.nsteps = nsteps
         self.dones = [False for _ in range(nenv)]
+        self.use_nm_customization = use_nm_customization
         
         if use_nm_customization:
             print('AbstractEnvRunner class uses neural map’s customization')
@@ -17,10 +18,10 @@ class AbstractEnvRunner(ABC):
             tmp = env.reset()       
             self.obs = tmp[:,:-2]
             self.pos = tmp[:,-2:]
-            self.states = model.initial_state
 
             # Init neural map's internal memory
             if model.initial_state is not None:
+                print('AbstractEnvRunner class creates neural map’s internal memory')
                 self.neural_map = model.initial_state
                 self.neural_map_xy = np.zeros((self.neural_map.shape[0], self.neural_map.shape[3]), dtype=self.neural_map.dtype.name)
         else:
