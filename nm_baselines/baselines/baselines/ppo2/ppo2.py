@@ -21,7 +21,7 @@ def constfn(val):
 def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1, ent_coef=0.0, lr=3e-4,
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
             log_interval=10, nminibatches=1, noptepochs=4, cliprange=0.2,
-            save_interval=0, load_path=None, model_fn=None, update_fn=None, init_fn=None, mpi_rank_weight=1, comm=None, **network_kwargs):
+            save_interval=0, load_path=None, model_fn=None, update_fn=None, init_fn=None, mpi_rank_weight=1, comm=None, use_nm_customization=True, **network_kwargs):
     '''
     Learn policy using PPO algorithm (https://arxiv.org/abs/1707.06347)
 
@@ -112,7 +112,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
     if load_path is not None:
         model.load(load_path)
     # Instantiate the runner object
-    runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam)
+    runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam, use_nm_customization=use_nm_customization)
     if eval_env is not None:
         eval_runner = Runner(env = eval_env, model = model, nsteps = nsteps, gamma = gamma, lam= lam)
 
@@ -140,9 +140,10 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
         if update % log_interval == 0 and is_mpi_root: logger.info('Stepping environment...')
 
         # Get minibatch
-        #CHANGES_START
-        obs, returns, masks, actions, values, neglogpacs, pos, states, epinfos = runner.run() #pylint: disable=E0632
-        #CHANGES_END
+        if use_nm_customization:
+            obs, returns, masks, actions, values, neglogpacs, pos, states, epinfos = runner.run() #pylint: disable=E0632
+        else:
+            obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run() #pylint: disable=E0632
         if eval_env is not None:
             eval_obs, eval_returns, eval_masks, eval_actions, eval_values, eval_neglogpacs, eval_states, eval_epinfos = eval_runner.run() #pylint: disable=E0632
 
@@ -178,11 +179,13 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
                     end = start + envsperbatch
                     mbenvinds = envinds[start:end]
                     mbflatinds = flatinds[mbenvinds].ravel()
-                    #CHANGES_START
-                    slices = (arr[mbflatinds] for arr in (obs, returns, masks, actions, values, neglogpacs, states))
-                    #mbstates = states[mbenvinds]
-                    mblossvals.append(model.train(lrnow, cliprangenow, *slices))
-                    #CHANGES_END
+                    if use_nm_customization:
+                        slices = (arr[mbflatinds] for arr in (obs, returns, masks, actions, values, neglogpacs, states))
+                        mblossvals.append(model.train(lrnow, cliprangenow, *slices))
+                    else:
+                        slices = (arr[mbflatinds] for arr in (obs, returns, masks, actions, values, neglogpacs))
+                        mbstates = states[mbenvinds]
+                        mblossvals.append(model.train(lrnow, cliprangenow, *slices, mbstates))
 
         # Feedforward --> get losses --> update
         lossvals = np.mean(mblossvals, axis=0)
@@ -219,7 +222,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
             savepath = osp.join(checkdir, '%.5i'%update)
             print('Saving to', savepath)
             model.save(savepath)
-    
+
     print('\n')
     for info in epinfobuf:
         print('episode length: ', info['l'])
@@ -230,6 +233,3 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
 # Avoid division error when calculate the mean (in our case if epinfo is empty returns np.nan, not return an error)
 def safemean(xs):
     return np.nan if len(xs) == 0 else np.mean(xs)
-
-
-
