@@ -20,8 +20,9 @@ class AbstractEnvRunner(ABC):
             self.states = model.initial_state
 
             # Init neural map's internal memory
-            self.neural_map = model.initial_state
-            self.neural_map_xy = np.zeros((self.neural_map.shape[0], self.neural_map.shape[3]), dtype=self.neural_map.dtype.name)
+            if model.initial_state is not None:
+                self.neural_map = model.initial_state
+                self.neural_map_xy = np.zeros((self.neural_map.shape[0], self.neural_map.shape[3]), dtype=self.neural_map.dtype.name)
         else:
             self.batch_ob_shape = (nenv*nsteps,) + env.observation_space.shape
             self.obs = np.zeros((nenv,) + env.observation_space.shape, dtype=env.observation_space.dtype.name)
