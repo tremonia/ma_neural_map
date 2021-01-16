@@ -23,7 +23,7 @@ class Runner(AbstractEnvRunner):
             mb_obs, mb_rewards, mb_actions, mb_values, mb_dones, mb_neglogpacs, mb_pos, mb_nm, mb_nm_xy = [],[],[],[],[],[],[],[],[]
         else:
             mb_obs, mb_rewards, mb_actions, mb_values, mb_dones, mb_neglogpacs = [],[],[],[],[],[]
-            mb_states = self.states
+        mb_states = self.states
         epinfos = []
         # For n in range number of steps
         for _ in range(self.nsteps):
@@ -31,12 +31,15 @@ class Runner(AbstractEnvRunner):
             # We already have self.obs because Runner superclass run self.obs[:] = env.reset() on init
 
             if self.use_nm_customization:
-                # Prepare nm_xy
                 if self.model.initial_state is not None:
+                    # Prepare nm_xy
                     for i in range(self.neural_map.shape[0]):
                         self.neural_map_xy[i,:] = self.neural_map[i, int(self.pos[i,1]//2), int(self.pos[i,0]//2), :]
 
-                actions, values, write_vector, neglogpacs = self.model.step(self.obs, S=self.neural_map, M=self.neural_map_xy)
+                    actions, values, write_vector, neglogpacs = self.model.step(self.obs, S=self.neural_map, M=self.neural_map_xy)
+                else:
+                    # Non-recurrent model, i.e. NOT neural map
+                    actions, values, self.states, neglogpacs = self.model.step(self.obs, S=None, M=None)
             else:
                 actions, values, self.states, neglogpacs = self.model.step(self.obs, S=self.states, M=self.dones)
 
@@ -58,7 +61,6 @@ class Runner(AbstractEnvRunner):
 
                 # Take actions in env and look the results
                 # Infos contains a ton of useful informations
-
                 tmp, rewards, self.dones, infos = self.env.step(actions)
                 self.obs = tmp[:,:-2]
                 self.pos = tmp[:,-2:]
@@ -87,7 +89,10 @@ class Runner(AbstractEnvRunner):
                 for i in range(self.neural_map.shape[0]):
                     self.neural_map_xy[i,:] = self.neural_map[i, int(self.pos[i,1]//2), int(self.pos[i,0]//2), :]
 
-            last_values = self.model.value(self.obs, S=self.neural_map, M=self.neural_map_xy)
+                last_values = self.model.value(self.obs, S=self.neural_map, M=self.neural_map_xy)
+            else:
+                # Non-recurrent model, i.e. NOT neural map
+                last_values = self.model.value(self.obs, S=None, M=None)
         else:
             last_values = self.model.value(self.obs, S=self.states, M=self.dones)
 
@@ -106,9 +111,10 @@ class Runner(AbstractEnvRunner):
             mb_advs[t] = lastgaelam = delta + self.gamma * self.lam * nextnonterminal * lastgaelam
         mb_returns = mb_advs + mb_values
 
-        if self.use_nm_customization:
-            return (*map(sf01, (mb_obs, mb_returns, mb_nm_xy, mb_actions, mb_values, mb_neglogpacs, mb_pos, mb_nm)), epinfos)
+        if self.model.initial_state is not None:
+            return (*map(sf01, (mb_obs, mb_returns, mb_nm_xy, mb_actions, mb_values, mb_neglogpacs, mb_nm)), epinfos)
         else:
+            # Non-recurrent model, i.e. NOT neural map
             return (*map(sf01, (mb_obs, mb_returns, mb_dones, mb_actions, mb_values, mb_neglogpacs)),
             mb_states, epinfos)
 

@@ -9,7 +9,8 @@ class AbstractEnvRunner(ABC):
         self.nsteps = nsteps
         self.dones = [False for _ in range(nenv)]
         self.use_nm_customization = use_nm_customization
-        
+        self.states = model.initial_state
+
         if use_nm_customization:
             print('AbstractEnvRunner class uses neural map’s customization')
             self.batch_ob_shape = (nenv*nsteps,) + (env.observation_space.shape[0]-2,)
@@ -18,7 +19,7 @@ class AbstractEnvRunner(ABC):
             tmp = env.reset()       
             self.obs = tmp[:,:-2]
             self.pos = tmp[:,-2:]
-
+            
             # Init neural map's internal memory
             if model.initial_state is not None:
                 print('AbstractEnvRunner class creates neural map’s internal memory')
@@ -28,7 +29,6 @@ class AbstractEnvRunner(ABC):
             self.batch_ob_shape = (nenv*nsteps,) + env.observation_space.shape
             self.obs = np.zeros((nenv,) + env.observation_space.shape, dtype=env.observation_space.dtype.name)
             self.obs[:] = env.reset()
-            self.states = model.initial_state
 
 
     @abstractmethod

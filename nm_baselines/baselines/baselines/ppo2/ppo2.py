@@ -140,13 +140,10 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
         if update % log_interval == 0 and is_mpi_root: logger.info('Stepping environment...')
 
         # Get minibatch
-        if use_nm_customization:
-            obs, returns, masks, actions, values, neglogpacs, pos, states, epinfos = runner.run() #pylint: disable=E0632
-        else:
-            obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run() #pylint: disable=E0632
+        obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run() #pylint: disable=E0632
         if eval_env is not None:
             eval_obs, eval_returns, eval_masks, eval_actions, eval_values, eval_neglogpacs, eval_states, eval_epinfos = eval_runner.run() #pylint: disable=E0632
-
+        
         if update % log_interval == 0 and is_mpi_root: logger.info('Done.')
 
         epinfobuf.extend(epinfos)
@@ -182,7 +179,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
                     if use_nm_customization:
                         slices = (arr[mbflatinds] for arr in (obs, returns, masks, actions, values, neglogpacs, states))
                         mblossvals.append(model.train(lrnow, cliprangenow, *slices))
-                    else:
+                    else: #recurrent model which is NOT neural map, probably doesn't work atm
                         slices = (arr[mbflatinds] for arr in (obs, returns, masks, actions, values, neglogpacs))
                         mbstates = states[mbenvinds]
                         mblossvals.append(model.train(lrnow, cliprangenow, *slices, mbstates))
