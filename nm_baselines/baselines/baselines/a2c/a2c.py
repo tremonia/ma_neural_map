@@ -32,7 +32,8 @@ class Model(object):
     """
     def __init__(self, policy, env, nsteps,
             ent_coef=0.01, vf_coef=0.5, max_grad_norm=0.5, lr=7e-4,
-            alpha=0.99, epsilon=1e-5, total_timesteps=int(80e6), lrschedule='linear'):
+            alpha=0.99, epsilon=1e-5, total_timesteps=int(80e6), lrschedule='linear',
+            use_nm_customization=False):
 
         sess = tf_util.get_session()
         nenvs = env.num_envs
@@ -41,10 +42,10 @@ class Model(object):
 
         with tf.variable_scope('a2c_model', reuse=tf.AUTO_REUSE):
             # step_model is used for sampling
-            step_model = policy(nenvs, 1, sess)
+            step_model = policy(nenvs, 1, sess, use_nm_customization=use_nm_customization)
 
             # train_model is used to train our network
-            train_model = policy(nbatch, nsteps, sess)
+            train_model = policy(nbatch, nsteps, sess, use_nm_customization=use_nm_customization)
 
         A = tf.placeholder(train_model.action.dtype, train_model.action.shape)
         ADV = tf.placeholder(tf.float32, [nbatch])
@@ -132,6 +133,7 @@ def learn(
     gamma=0.99,
     log_interval=100,
     load_path=None,
+    use_nm_customization=True,
     **network_kwargs):
 
     '''
@@ -191,12 +193,13 @@ def learn(
 
     # Instantiate the model object (that creates step_model and train_model)
     model = Model(policy=policy, env=env, nsteps=nsteps, ent_coef=ent_coef, vf_coef=vf_coef,
-        max_grad_norm=max_grad_norm, lr=lr, alpha=alpha, epsilon=epsilon, total_timesteps=total_timesteps, lrschedule=lrschedule)
+        max_grad_norm=max_grad_norm, lr=lr, alpha=alpha, epsilon=epsilon, total_timesteps=total_timesteps, lrschedule=lrschedule,
+        use_nm_customization=use_nm_customization)
     if load_path is not None:
         model.load(load_path)
 
     # Instantiate the runner object
-    runner = Runner(env, model, nsteps=nsteps, gamma=gamma)
+    runner = Runner(env, model, nsteps=nsteps, gamma=gamma, use_nm_customization=use_nm_customization)
     epinfobuf = deque(maxlen=100)
 
     # Calculate the batch_size
@@ -209,7 +212,9 @@ def learn(
         # Get mini batch of experiences
         obs, states, rewards, masks, actions, values, epinfos = runner.run()
         epinfobuf.extend(epinfos)
-
+        print('\n')
+        print('obs shape in a2c.py: ', obs.shape)
+        print('\n')
         policy_loss, value_loss, policy_entropy = model.train(obs, states, rewards, masks, actions, values)
         nseconds = time.time()-tstart
 
@@ -229,4 +234,3 @@ def learn(
             logger.record_tabular("eplenmean", safemean([epinfo['l'] for epinfo in epinfobuf]))
             logger.dump_tabular()
     return model
-
