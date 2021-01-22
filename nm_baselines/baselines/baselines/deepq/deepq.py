@@ -19,6 +19,8 @@ from baselines.deepq.utils import ObservationInput
 from baselines.common.tf_util import get_session
 from baselines.deepq.models import build_q_func
 
+import gym
+from gym import spaces
 
 class ActWrapper(object):
     def __init__(self, act, act_params):
@@ -193,8 +195,13 @@ def learn(env,
 
     # capture the shape outside the closure so that the env object is not serialized
     # by cloudpickle when serializing make_obs_ph
+    use_nm_customization = True
 
-    observation_space = env.observation_space
+    if use_nm_customization:
+        observation_space = spaces.Box(low=env.observation_space.low[0], high=env.observation_space.high[0], shape=(env.observation_space.shape[0]-2,), dtype=env.observation_space.dtype.name)
+    else:
+        observation_space = env.observation_space
+
     def make_obs_ph(name):
         return ObservationInput(observation_space, name=name)
 
@@ -238,7 +245,13 @@ def learn(env,
 
     episode_rewards = [0.0]
     saved_mean_reward = None
-    obs = env.reset()
+
+    if use_nm_customization:
+        tmp = env.reset()
+        obs = tmp[0,:-2]
+    else:
+        obs = env.reset()
+
     reset = True
 
     with tempfile.TemporaryDirectory() as td:
@@ -278,14 +291,24 @@ def learn(env,
             action = act(np.array(obs)[None], update_eps=update_eps, **kwargs)[0]
             env_action = action
             reset = False
-            new_obs, rew, done, _ = env.step(env_action)
+
+            if use_nm_customization:
+                tmp, rew, done, _ = env.step(env_action)
+                new_obs = tmp[0,:-2]
+            else:
+                new_obs, rew, done, _ = env.step(env_action)
+
             # Store transition in the replay buffer.
             replay_buffer.add(obs, action, rew, new_obs, float(done))
             obs = new_obs
 
             episode_rewards[-1] += rew
             if done:
-                obs = env.reset()
+                if use_nm_customization:
+                    tmp = env.reset()
+                    obs = tmp[0,:-2]
+                else:
+                    obs = env.reset()
                 episode_rewards.append(0.0)
                 reset = True
 
