@@ -80,6 +80,10 @@ def train(args, extra_args):
         **alg_kwargs
     )
 
+    print('#############################################')
+    print('train(...): Das Schiff ist sicher im Hafen eingelaufen...')
+    print('#############################################')
+
     return model, env
 
 
@@ -206,6 +210,7 @@ def main(args):
     args, unknown_args = arg_parser.parse_known_args(args)
     extra_args = parse_cmdline_kwargs(unknown_args)
 
+
     if MPI is None or MPI.COMM_WORLD.Get_rank() == 0:
         rank = 0
         configure_logger(args.log_path)
@@ -243,9 +248,9 @@ def main(args):
                     episode_rew[i] = 0
 
     env.close()
-    
+
     print('#############################################')
-    print('Das Schiff ist sicher im Hafen eingelaufen...')
+    print('main(...): Das Schiff ist sicher im Hafen eingelaufen...')
     print('#############################################')
 
     return model
