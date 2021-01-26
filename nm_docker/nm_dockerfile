@@ -3,4 +3,4 @@ MAINTAINER tobias.weber@tu-dortmund.de
 
 RUN apt-get install -y libgl1-mesa-dev
 
-RUN pip install gym==0.15.7
+RUN pip install gym==0.15.7 pymongo==3.11.2 sacred==0.8.2
