@@ -133,7 +133,7 @@ def learn(
     gamma=0.99,
     log_interval=100,
     load_path=None,
-    use_nm_customization=True,
+    use_nm_customization=False,
     **network_kwargs):
 
     '''
@@ -212,9 +212,6 @@ def learn(
         # Get mini batch of experiences
         obs, states, rewards, masks, actions, values, epinfos = runner.run()
         epinfobuf.extend(epinfos)
-        print('\n')
-        print('obs shape in a2c.py: ', obs.shape)
-        print('\n')
         policy_loss, value_loss, policy_entropy = model.train(obs, states, rewards, masks, actions, values)
         nseconds = time.time()-tstart
 

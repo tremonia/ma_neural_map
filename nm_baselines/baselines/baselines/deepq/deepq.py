@@ -118,6 +118,7 @@ def learn(env,
           param_noise=False,
           callback=None,
           load_path=None,
+          use_nm_customization=False,
           **network_kwargs
             ):
     """Train a deepq model.
@@ -195,7 +196,6 @@ def learn(env,
 
     # capture the shape outside the closure so that the env object is not serialized
     # by cloudpickle when serializing make_obs_ph
-    use_nm_customization = True
 
     if use_nm_customization:
         observation_space = spaces.Box(low=env.observation_space.low[0], high=env.observation_space.high[0], shape=(env.observation_space.shape[0]-2,), dtype=env.observation_space.dtype.name)
