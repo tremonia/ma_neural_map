@@ -28,7 +28,6 @@ class Two_Goals_Indicators_Dimensions(gym.Env):
         # determine wright and wrong goal position
         if np.any(self.map[1,:,:]):
             #Indicator 1 -> wright goal position in layer 3, wrong in layer 4
-            hans = np.nonzero(self.map[3,:,:])
             self.wright_goal_position_x = np.nonzero(self.map[3,:,:])[1][0]
             self.wright_goal_position_y = np.nonzero(self.map[3,:,:])[0][0]
             self.wrong_goal_position_x = np.nonzero(self.map[4,:,:])[1][0]
@@ -54,9 +53,6 @@ class Two_Goals_Indicators_Dimensions(gym.Env):
 
 
     def step(self, action):
-        #print('\n')
-        #print('Step method called...')
-        #print('\n')
         # don't do anything if previous state was a terminal state
         if self.last_done:
             return {"position" : np.array((int(self.position_x), int(self.position_y))), "observation" : self.last_obs}, 0., self.last_done, {}

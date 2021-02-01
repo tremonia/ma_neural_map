@@ -3,7 +3,7 @@ from gym.envs.registration import register
 register(
     id='two_indicators_goals_dimensions-v0',
     entry_point='neural_map_envs.envs:Two_Goals_Indicators_Dimensions',
-    kwargs={'map_name'  : 'EasyMap001.npy',
+    kwargs={'map_name'  : '/home/tweber/ma_neural_map/nm_envs/neural_map_envs/neural_map_envs/envs/map_data_files/EasyMap001.npy',
             'view_straightforward'  : 3,
             'view_left_right'       : 1,
             'start_position_x'  : 2,
