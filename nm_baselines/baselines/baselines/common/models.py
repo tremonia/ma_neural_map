@@ -250,22 +250,36 @@ def conv_only(convs=[(32, 8, 4), (64, 4, 2), (64, 3, 1)], **conv_kwargs):
 
 
 @register("neural_map")
-def neural_map(**nm_kwargs):
+def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions):
     def neural_map_fn(X, nenv=1):
 
-        def global_read(nm, c_dim):
+        def global_read(nm, gr_args, c_dim):
             # input: neural map (nm)
             # output: c-dimensional global read vector (r)
 
-            # 2 conv layer 1 fc layer
             activ = tf.nn.relu
 
-            hidden_0 = activ(conv(nm, 'gr_c1', nf=8, rf=3, stride=1, init_scale=np.sqrt(2)))
-            #hidden_1 = activ(conv(hidden_0, 'gr_c2', nf=8, rf=3, stride=2, init_scale=np.sqrt(2)))
+            # conv and fc layers specified by gr_args
+            h = nm
+            for i, params in enumerate(gr_args):
+                # conv layer(s) specified by gr_args
+                if isinstance(params, dict):
+                    h = activ(conv(h, 'gr_conv{}'.format(i), nf=params['nf'], rf=params['rf'], stride=params['stride'], pad=params['pad'], init_scale=np.sqrt(2)))
 
-            hidden_2 = tf.layers.flatten(hidden_0)
+                # fc layer(s) specified by gr_args
+                else:
+                    #flatten 1 times at the transition from conv to fc
+                    if isinstance(gr_args[i-1], dict):
+                        h = tf.layers.flatten(h)
+                        h = activ(fc(h, 'gr_fc{}'.format(i), nh=params, init_scale=np.sqrt(2)))
+                    else:
+                        h = activ(fc(h, 'gr_fc{}'.format(i), nh=params, init_scale=np.sqrt(2)))
 
-            r = activ(fc(hidden_2, 'gr_fc1', nh=c_dim, init_scale=np.sqrt(2)))
+            # flatten if no fc layer has been created so far, i.e. only dicts in lw_args
+            if not any(not isinstance(item, dict) for item in lw_args):
+                h = tf.layers.flatten(h)
+            # last fc layer that produces c-dimensional ouput r
+            r = activ(fc(h, 'gr_fc{}'.format(len(gr_args)), nh=c_dim, init_scale=np.sqrt(2)))
 
             return r
 
@@ -279,7 +293,7 @@ def neural_map(**nm_kwargs):
                 input = tf.concat([s_flat, r], 1)
 
                 no_rows_W = input.get_shape()[1].value
-                W = tf.get_variable("W", [no_rows_W, c_dim], initializer=ortho_init(1.))
+                W = tf.get_variable("W", [no_rows_W, c_dim], initializer=ortho_init(np.sqrt(2)))
 
                 batch_size = s_flat.shape[0]
                 nm_reshaped = tf.reshape(nm, [batch_size, -1, c_dim])
@@ -296,53 +310,62 @@ def neural_map(**nm_kwargs):
 
                 return c
 
-        def local_write(s_flat, r, c, nm_xy, c_dim):
+        def local_write(s_flat, r, c, nm_xy, lw_args, c_dim):
             # input: flattened state (s_flat), r, c, neural map's feature vector(s) at position(s) x_i,y_i (nm_xy)
             # output: c-dimensional local write candidate vector w
 
-            # 2 fc layer
             activ = tf.nn.relu
 
-            input = tf.concat([s_flat, r, c, nm_xy], 1)
+            # fc layer(s) specified by lw_args
+            h = tf.concat([s_flat, r, c, nm_xy], 1)
+            for i, nneurons in enumerate(lw_args):
+                h = activ(fc(h, 'lw_fc{}'.format(i), nh=nneurons, init_scale=np.sqrt(2)))
 
-            hidden_0 = activ(fc(input, 'lw_fc1', nh=64, init_scale=np.sqrt(2)))
-            w = activ(fc(hidden_0, 'lw_fc2', nh=c_dim, init_scale=np.sqrt(2)))
+            # last fc layer that produces c-dimensional ouput w
+            if not fnn_args:
+                last_fcl_name = 'lw_fc0'
+            else:
+                last_fcl_name = 'lw_fc{}'.format(len(lw_args))
+            w = activ(fc(h, last_fcl_name, nh=c_dim, init_scale=np.sqrt(2)))
 
             return w
 
-        def final_nn(r, c, w, no_actions):
+        def final_nn(r, c, w, fnn_args, no_actions):
             # input: r, c, w
             # output: no_actions-dimensional vector
 
-            # 2 fc layer
             activ = tf.nn.relu
             softmax = tf.nn.softmax
 
-            input = tf.concat([r, c, w], 1)
+            # fc layer(s) specified by lw_args
+            h = tf.concat([r, c, w], 1)
+            for i, nneurons in enumerate(fnn_args):
+                h = activ(fc(h, 'fnn_fc{}'.format(i), nh=nneurons, init_scale=np.sqrt(2)))
 
-            hidden_0 = activ(fc(input, 'fnn_fc1', nh=64, init_scale=np.sqrt(2)))
-            hidden_1 = activ(fc(hidden_0, 'fnn_fc2', nh=no_actions, init_scale=np.sqrt(2)))
-            output = softmax(hidden_1)
+            # last fc layer that predicts action
+            if not fnn_args:
+                last_fcl_name = 'fnn_fc0'
+            else:
+                last_fcl_name = 'fnn_fc{}'.format(len(fnn_args))
+            h = activ(fc(h, last_fcl_name, nh=no_actions, init_scale=np.sqrt(2)))
+            output = softmax(h)
 
             return output
 
-        nm_h_dim = 5
-        nm_v_dim = 5
-        c_dim = 8
 
-        no_actions = 3
+        print('\nNeural Map with dimensions [v={}, h= {}, c={}] created!\n'.format(nm_dims[0], nm_dims[1], nm_dims[2]))
 
         batch_size = X.shape[0]
 
-        M = tf.placeholder(tf.float32, [batch_size, c_dim])
-        S = tf.placeholder(tf.float32, [batch_size, nm_v_dim, nm_h_dim, c_dim])
+        M = tf.placeholder(tf.float32, [batch_size, nm_dims[2]])
+        S = tf.placeholder(tf.float32, [batch_size, nm_dims[0], nm_dims[1], nm_dims[2]])
 
         s_flat = tf.layers.flatten(X)
 
-        r = global_read(S, c_dim)
-        c = context_read(S, s_flat, r, c_dim)
-        w = local_write(s_flat, r, c, M, c_dim)
-        output = final_nn(r, c, w, no_actions)
+        r = global_read(S, gr_args, nm_dims[2])
+        c = context_read(S, s_flat, r, nm_dims[2])
+        w = local_write(s_flat, r, c, M, lw_args, nm_dims[2])
+        output = final_nn(r, c, w, fnn_args, nactions)
 
         initial_state = np.zeros(S.shape.as_list(), dtype=float)
 

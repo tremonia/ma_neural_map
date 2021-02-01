@@ -158,10 +158,24 @@ elif alg == 'deepq':
     alg_args['load_path'] = None
 
 # neural map's parameters
-alg_args['use_nm_customization'] = True
+if env.split(':')[0] == 'neural_map_envs':
+    alg_args['use_nm_customization'] = True
 
-# TO DO: neural map parametrization !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+if network == 'neural_map':
+    # neural map's dimensions as a list in order horizontal dim, vertical dim, c_dim
+    alg_args['nm_dims'] = [5, 5, 8]
+    # global read's args; list of dicts / ints where every dict / int contains one layer's parameter(s)
+    # has to contain at least 1 dict with conv layer's parameters
+    # the last fc layer doesn't have to be specified and always has c_dim neurons
+    alg_args['gr_args'] = [{'nf':8, 'rf':3, 'stride':1, 'pad':'SAME'}, {'nf':16, 'rf':3, 'stride':2, 'pad':'SAME'}, 32]
+    # local write's args; list that contains the number of neurons in the fc layers
+    # the last fc layer doesn't have to be specified and always has c_dim neurons
+    alg_args['lw_args'] = [32]
+    # final nn's args; list that contains the number of neurons in the fc layers
+    # the last fc layer doesn't have to be specified and always has nactions neurons
+    alg_args['fnn_args'] = [32]
+    # number of actions
+    alg_args['nactions'] = 3
 
 # END PARAMETER SECTION --> @ex.config() #########################################################
 
