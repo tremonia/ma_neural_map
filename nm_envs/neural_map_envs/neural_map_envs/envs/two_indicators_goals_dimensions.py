@@ -41,7 +41,7 @@ class Two_Goals_Indicators_Dimensions(gym.Env):
 
         # set observation and action space
         observation_shape = (self.map.shape[0], self.view_straightforward, 2*self.view_left_right+1)
-        self.observation_space = spaces.Dict({"position": spaces.MultiDiscrete([self.map.shape[2] - 1, self.map.shape[1] - 1]),
+        self.observation_space = spaces.Dict({"position": spaces.MultiDiscrete([self.map.shape[2], self.map.shape[1]]),
                                               "observation": spaces.Box(low=0., high=1., shape=observation_shape, dtype=np.float32)})
         self.action_space = spaces.Discrete(3)
 
