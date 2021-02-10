@@ -258,6 +258,7 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions):
             # output: c-dimensional global read vector (r)
 
             activ = tf.nn.relu
+            last_activ = tf.nn.tanh
 
             # conv and fc layers specified by gr_args
             h = nm
@@ -279,7 +280,7 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions):
             if not any(not isinstance(item, dict) for item in lw_args):
                 h = tf.layers.flatten(h)
             # last fc layer that produces c-dimensional ouput r
-            r = activ(fc(h, 'gr_fc{}'.format(len(gr_args)), nh=c_dim, init_scale=np.sqrt(2)))
+            r = last_activ(fc(h, 'gr_fc{}'.format(len(gr_args)), nh=c_dim, init_scale=np.sqrt(2)))
 
             return r
 
@@ -315,6 +316,7 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions):
             # output: c-dimensional local write candidate vector w
 
             activ = tf.nn.relu
+            last_activ = tf.nn.tanh
 
             # fc layer(s) specified by lw_args
             h = tf.concat([s_flat, r, c, nm_xy], 1)
@@ -326,7 +328,7 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions):
                 last_fcl_name = 'lw_fc0'
             else:
                 last_fcl_name = 'lw_fc{}'.format(len(lw_args))
-            w = activ(fc(h, last_fcl_name, nh=c_dim, init_scale=np.sqrt(2)))
+            w = last_activ(fc(h, last_fcl_name, nh=c_dim, init_scale=np.sqrt(2)))
 
             return w
 
