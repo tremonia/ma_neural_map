@@ -14,11 +14,17 @@ except ImportError:
     MPI = None
 
 from sacred import Experiment
+from sacred.observers import FileStorageObserver
 
 class bl_arg_class():
     pass
 
+alg_global = 'a2c'
+log_path_global = os.path.join('/mnt/ma_neural_map/nm_results', alg_global +  datetime.datetime.now().strftime("-%Y-%m-%d-%H-%M-%S-%f"))
+
 ex = Experiment(save_git_info=False)
+ex.observers.append(FileStorageObserver(log_path_global))
+
 
 # BEGIN PARAMETER SECTION --> @ex.config() #########################################################
 @ex.config
@@ -27,8 +33,8 @@ def nm_config():
     env = 'neural_map_envs:two_indicators_goals_dimensions-v0'
     env_type = None
     seed = int(2511988)
-    alg = 'ppo2'
-    num_timesteps = 5e6
+    alg = alg_global
+    num_timesteps = 1e4
     network = 'neural_map'
     gamestate = None
     num_env = 4
@@ -38,8 +44,7 @@ def nm_config():
     save_video_length = int(200)
     play = False
 
-    log_dir = '/mnt/ma_neural_map/nm_results'
-    log_path = os.path.join(log_dir, alg +  datetime.datetime.now().strftime("-%Y-%m-%d-%H-%M-%S-%f"))
+    log_path = log_path_global
 
     # alg's parameters
     alg_args = {}
@@ -59,7 +64,7 @@ def nm_config():
         # value function loss coefficient in the optimization objective; default = 0.5
         alg_args['vf_coef'] = 0.5
         # gradient norm clipping coefficient; default = 0.5
-        alg_args['max_grad_norm'] = 0.5
+        alg_args['max_grad_norm'] = 100
         # discounting factor; default = 0.99
         alg_args['gamma'] = 0.99
         # advantage estimation discounting factor (lambda in the paper); default = 0.95
@@ -170,7 +175,9 @@ def nm_config():
         # global read's args; list of dicts / ints where every dict / int contains one layer's parameter(s)
         # has to contain at least 1 dict with conv layer's parameters
         # the last fc layer doesn't have to be specified and always has c_dim neurons
-        alg_args['gr_args'] = [{'nf':8, 'rf':3, 'stride':1, 'pad':'VALID'}, {'nf':8, 'rf':3, 'stride':2, 'pad':'SAME'}, 32]
+        alg_args['gr_args'] = [{'nf':8, 'rf':3, 'stride':1, 'pad':[[0,0], [1,1], [1,1], [0,0]]},
+                               {'nf':8, 'rf':3, 'stride':2, 'pad':[[0,0], [0,0], [0,0], [0,0]]},
+                               32]
         # local write's args; list that contains the number of neurons in the fc layers
         # the last fc layer doesn't have to be specified and always has c_dim neurons
         alg_args['lw_args'] = [32]
