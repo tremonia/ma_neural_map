@@ -33,7 +33,8 @@ class Model(object):
     def __init__(self, policy, env, nsteps,
             ent_coef=0.01, vf_coef=0.5, max_grad_norm=0.5, lr=7e-4,
             alpha=0.99, epsilon=1e-5, total_timesteps=int(80e6), lrschedule='linear',
-            use_nm_customization=False):
+                 use_nm_customization=False,
+                 optimizer = 'RMSProp'):
 
         self.sess = sess = tf_util.get_session()
         nenvs = env.num_envs
@@ -82,7 +83,10 @@ class Model(object):
         # For instance zip(ABCD, xyza) => Ax, By, Cz, Da
 
         # 3. Make op for one policy and value update step of A2C
-        trainer = tf.train.RMSPropOptimizer(learning_rate=LR, decay=alpha, epsilon=epsilon)
+        if optimizer == 'RMSProp':
+            trainer = tf.train.RMSPropOptimizer(learning_rate=LR, decay=alpha, epsilon=epsilon)
+        elif optimizer == 'GD':
+            trainer = tf.train.GradientDescentOptimizer(learning_rate=LR)
 
         _train = trainer.apply_gradients(grads)
 
@@ -134,7 +138,8 @@ def learn(
     log_interval=100,
     load_path=None,
     nm_customization_args={'use_nm_customization':False,
-                           'log_model_parameters':False},
+                           'log_model_parameters':False,
+                           'optimizer':'RMSProp'},
     **network_kwargs):
 
     '''
@@ -194,7 +199,8 @@ def learn(
     # Instantiate the model object (that creates step_model and train_model)
     model = Model(policy=policy, env=env, nsteps=nsteps, ent_coef=ent_coef, vf_coef=vf_coef,
         max_grad_norm=max_grad_norm, lr=lr, alpha=alpha, epsilon=epsilon, total_timesteps=total_timesteps, lrschedule=lrschedule,
-                  use_nm_customization=nm_customization_args['use_nm_customization'])
+                  use_nm_customization=nm_customization_args['use_nm_customization'],
+                  optimizer = nm_customization_args['optimizer'])
     if load_path is not None:
         model.load(load_path)
 

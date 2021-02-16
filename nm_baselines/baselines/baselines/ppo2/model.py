@@ -26,7 +26,8 @@ class Model(object):
     """
     def __init__(self, *, policy, ob_space, ac_space, nbatch_act, nbatch_train,
                 nsteps, ent_coef, vf_coef, max_grad_norm, mpi_rank_weight=1, comm=None, microbatch_size=None,
-                use_nm_customization=False):
+                 use_nm_customization=False,
+                 optimizer='Adam'):
         self.sess = sess = get_session()
 
         if MPI is not None and comm is None:
@@ -97,8 +98,10 @@ class Model(object):
         # 2. Build our trainer
         if comm is not None and comm.Get_size() > 1:
             self.trainer = MpiAdamOptimizer(comm, learning_rate=LR, mpi_rank_weight=mpi_rank_weight, epsilon=1e-5)
-        else:
+        elif optimizer=='Adam':
             self.trainer = tf.train.AdamOptimizer(learning_rate=LR, epsilon=1e-5)
+        elif optimizer=='GD':
+            self.trainer = tf.train.GradientDescentOptimizer(learning_rate=LR)
         # 3. Calculate the gradients
         grads_and_var = self.trainer.compute_gradients(loss, params)
         grads, var = zip(*grads_and_var)

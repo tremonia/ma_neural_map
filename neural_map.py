@@ -169,7 +169,8 @@ def nm_config():
     if env.split(':')[0] == 'neural_map_envs':
         alg_args['nm_customization_args'] = {'use_nm_customization':True,
                                              'log_model_parameters':True,
-                                             'log_path':log_path_global}
+                                             'log_path':log_path_global,
+                                             'optimizer':'RMSProp'}
 
     if network == 'neural_map':
         # neural map's dimensions as a list in order horizontal dim, vertical dim, c_dim
