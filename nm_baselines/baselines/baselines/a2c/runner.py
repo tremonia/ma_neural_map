@@ -95,7 +95,7 @@ class Runner(AbstractEnvRunner):
                     mb_nm = mb_nm.swapaxes(0, 1).reshape(mb_nm.shape[0] * mb_nm.shape[1], *mb_nm.shape[2:])
                     mb_nm_xy = np.asarray(mb_nm_xy, dtype=self.neural_map_xy.dtype)
                     mb_nm_xy = mb_nm_xy.swapaxes(0, 1).reshape(mb_nm_xy.shape[0] * mb_nm_xy.shape[1], *mb_nm_xy.shape[2:])
-                    
+
                     # Prepare nm_xy
                     for i in range(self.neural_map.shape[0]):
                         self.neural_map_xy[i,:] = self.neural_map[i, int(self.pos[i,1]//2), int(self.pos[i,0]//2), :]

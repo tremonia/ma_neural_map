@@ -35,7 +35,7 @@ class Model(object):
             alpha=0.99, epsilon=1e-5, total_timesteps=int(80e6), lrschedule='linear',
             use_nm_customization=False):
 
-        sess = tf_util.get_session()
+        self.sess = sess = tf_util.get_session()
         nenvs = env.num_envs
         nbatch = nenvs*nsteps
 
@@ -99,7 +99,7 @@ class Model(object):
             if states is not None:
                 td_map[train_model.S] = states
                 td_map[train_model.M] = masks
-            policy_loss, value_loss, policy_entropy, _ = sess.run(
+            policy_loss, value_loss, policy_entropy, _ = self.sess.run(
                 [pg_loss, vf_loss, entropy, _train],
                 td_map
             )
@@ -133,7 +133,8 @@ def learn(
     gamma=0.99,
     log_interval=100,
     load_path=None,
-    use_nm_customization=False,
+    nm_customization_args={'use_nm_customization':False,
+                           'log_model_parameters':False},
     **network_kwargs):
 
     '''
@@ -184,7 +185,6 @@ def learn(
     '''
 
 
-
     set_global_seeds(seed)
 
     # Get the nb of env
@@ -194,12 +194,19 @@ def learn(
     # Instantiate the model object (that creates step_model and train_model)
     model = Model(policy=policy, env=env, nsteps=nsteps, ent_coef=ent_coef, vf_coef=vf_coef,
         max_grad_norm=max_grad_norm, lr=lr, alpha=alpha, epsilon=epsilon, total_timesteps=total_timesteps, lrschedule=lrschedule,
-        use_nm_customization=use_nm_customization)
+                  use_nm_customization=nm_customization_args['use_nm_customization'])
     if load_path is not None:
         model.load(load_path)
 
+    if nm_customization_args['log_model_parameters']:
+        tf.contrib.slim.model_analyzer.analyze_vars(tf.trainable_variables(), print_info=True)
+        for var in tf.trainable_variables():
+            tf.summary.histogram(var.name[:-2], var)
+        writer = tf.summary.FileWriter(nm_customization_args['log_path'], graph = model.sess.graph)
+        summary_op = tf.summary.merge_all()
+
     # Instantiate the runner object
-    runner = Runner(env, model, nsteps=nsteps, gamma=gamma, use_nm_customization=use_nm_customization)
+    runner = Runner(env, model, nsteps=nsteps, gamma=gamma, use_nm_customization=nm_customization_args['use_nm_customization'])
     epinfobuf = deque(maxlen=100)
 
     # Calculate the batch_size
@@ -230,4 +237,12 @@ def learn(
             logger.record_tabular("eprewmean", safemean([epinfo['r'] for epinfo in epinfobuf]))
             logger.record_tabular("eplenmean", safemean([epinfo['l'] for epinfo in epinfobuf]))
             logger.dump_tabular()
+
+        if nm_customization_args['log_model_parameters']:
+            writer.add_summary(model.sess.run(summary_op))
+
+    if nm_customization_args['log_model_parameters']:
+        writer.flush()
+        writer.close()
+
     return model

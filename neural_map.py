@@ -34,10 +34,10 @@ def nm_config():
     env_type = None
     seed = int(2511988)
     alg = alg_global
-    num_timesteps = 1e4
-    network = 'neural_map'
+    num_timesteps = 1e3
+    network = None
     gamestate = None
-    num_env = 4
+    num_env = 1
     reward_scale = 1.0
     save_path = None
     save_video_interval = int(0)
@@ -104,9 +104,9 @@ def nm_config():
         # coeffictiant in front of the policy entropy in the total loss function; default = 0.01
         alg_args['ent_coef'] = 0.01
         # gradient is clipped to have global L2 norm no more than this value; default = 0.5
-        alg_args['max_grad_norm'] = 0.5
+        alg_args['max_grad_norm'] = 100
         # learning rate for RMSProp (current implementation has RMSProp hardcoded in); default = 7e-4
-        alg_args['lr'] = 7e-4
+        alg_args['lr'] = 5e-3
         # schedule of learning rate. Can be 'linear', 'constant', or a function [0..1] -> [0..1] that takes fraction
         # of the training progress as input and returns fraction of the learning rate as output; default = 'linear'
         alg_args['lrschedule'] = 'linear'
@@ -167,23 +167,25 @@ def nm_config():
 
     # neural map's parameters
     if env.split(':')[0] == 'neural_map_envs':
-        alg_args['use_nm_customization'] = True
+        alg_args['nm_customization_args'] = {'use_nm_customization':True,
+                                             'log_model_parameters':True,
+                                             'log_path':log_path_global}
 
     if network == 'neural_map':
         # neural map's dimensions as a list in order horizontal dim, vertical dim, c_dim
-        alg_args['nm_dims'] = [5, 5, 8]
+        alg_args['nm_dims'] = [5, 5, 32]
         # global read's args; list of dicts / ints where every dict / int contains one layer's parameter(s)
         # has to contain at least 1 dict with conv layer's parameters
         # the last fc layer doesn't have to be specified and always has c_dim neurons
         alg_args['gr_args'] = [{'nf':8, 'rf':3, 'stride':1, 'pad':[[0,0], [1,1], [1,1], [0,0]]},
                                {'nf':8, 'rf':3, 'stride':2, 'pad':[[0,0], [0,0], [0,0], [0,0]]},
-                               32]
+                               256]
         # local write's args; list that contains the number of neurons in the fc layers
         # the last fc layer doesn't have to be specified and always has c_dim neurons
-        alg_args['lw_args'] = [32]
+        alg_args['lw_args'] = [256]
         # final nn's args; list that contains the number of neurons in the fc layers
         # the last fc layer doesn't have to be specified and always has nactions neurons
-        alg_args['fnn_args'] = [32]
+        alg_args['fnn_args'] = [256]
         # number of actions
         alg_args['nactions'] = 3
 

@@ -2,6 +2,7 @@ import os
 import time
 import numpy as np
 import os.path as osp
+import tensorflow as tf
 from baselines import logger
 from collections import deque
 from baselines.common import explained_variance, set_global_seeds
@@ -21,7 +22,10 @@ def constfn(val):
 def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1, ent_coef=0.0, lr=3e-4,
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
             log_interval=10, nminibatches=1, noptepochs=4, cliprange=0.2,
-            save_interval=0, load_path=None, model_fn=None, update_fn=None, init_fn=None, mpi_rank_weight=1, comm=None, use_nm_customization=False, **network_kwargs):
+            save_interval=0, load_path=None, model_fn=None, update_fn=None, init_fn=None, mpi_rank_weight=1, comm=None,
+          nm_customization_args={'use_nm_customization':False,
+                                 'log_model_parameters':False},
+          **network_kwargs):
     '''
     Learn policy using PPO algorithm (https://arxiv.org/abs/1707.06347)
 
@@ -108,12 +112,21 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
     model = model_fn(policy=policy, ob_space=ob_space, ac_space=ac_space, nbatch_act=nenvs, nbatch_train=nbatch_train,
                     nsteps=nsteps, ent_coef=ent_coef, vf_coef=vf_coef,
                     max_grad_norm=max_grad_norm, comm=comm, mpi_rank_weight=mpi_rank_weight,
-                    use_nm_customization=use_nm_customization)
+                    use_nm_customization=nm_customization_args['use_nm_customization'])
 
     if load_path is not None:
         model.load(load_path)
+
+    if nm_customization_args['log_model_parameters']:
+        tf.contrib.slim.model_analyzer.analyze_vars(tf.trainable_variables(), print_info=True)
+        for var in tf.trainable_variables():
+            tf.summary.histogram(var.name[:-2], var)
+        writer = tf.summary.FileWriter(nm_customization_args['log_path'], graph = model.sess.graph)
+        summary_op = tf.summary.merge_all()
+
+
     # Instantiate the runner object
-    runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam, use_nm_customization=use_nm_customization)
+    runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam, use_nm_customization=nm_customization_args['use_nm_customization'])
     if eval_env is not None:
         eval_runner = Runner(env = eval_env, model = model, nsteps = nsteps, gamma = gamma, lam= lam)
 
@@ -177,7 +190,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
                     end = start + envsperbatch
                     mbenvinds = envinds[start:end]
                     mbflatinds = flatinds[mbenvinds].ravel()
-                    if use_nm_customization:
+                    if nm_customization_args['use_nm_customization']:
                         slices = (arr[mbflatinds] for arr in (obs, returns, masks, actions, values, neglogpacs, states))
                         mblossvals.append(model.train(lrnow, cliprangenow, *slices))
                     else: #recurrent model which is NOT neural map, probably doesn't work atm
@@ -221,10 +234,12 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
             print('Saving to', savepath)
             model.save(savepath)
 
-    print('\n')
-    for info in epinfobuf:
-        print('episode length: ', info['l'])
-    print('\n')
+        if nm_customization_args['log_model_parameters']:
+            writer.add_summary(model.sess.run(summary_op))
+
+    if nm_customization_args['log_model_parameters']:
+        writer.flush()
+        writer.close()
 
 
     return model
