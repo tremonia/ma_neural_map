@@ -257,6 +257,7 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions):
             # input: neural map (nm)
             # output: c-dimensional global read vector (r)
 
+            was_flattened = False
             activ = tf.nn.relu
             last_activ = tf.nn.tanh
 
@@ -272,12 +273,13 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions):
                     #flatten 1 times at the transition from conv to fc
                     if isinstance(gr_args[i-1], dict):
                         h = tf.layers.flatten(h)
+                        was_flattened = True
                         h = activ(fc(h, 'gr_fc{}'.format(i), nh=params, init_scale=np.sqrt(2)))
                     else:
                         h = activ(fc(h, 'gr_fc{}'.format(i), nh=params, init_scale=np.sqrt(2)))
 
             # flatten if no fc layer has been created so far, i.e. only dicts in lw_args
-            if not any(not isinstance(item, dict) for item in lw_args):
+            if not was_flattened:
                 h = tf.layers.flatten(h)
             # last fc layer that produces c-dimensional ouput r
             r = last_activ(fc(h, 'gr_fc{}'.format(len(gr_args)), nh=c_dim, init_scale=np.sqrt(2)))
@@ -355,7 +357,7 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions):
             return output
 
 
-        print('\nNeural Map with dimensions [v={}, h= {}, c={}] created!\n'.format(nm_dims[0], nm_dims[1], nm_dims[2]))
+        print('\nNeural Map with dimensions [v={}, h={}, c={}] created!\n'.format(nm_dims[0], nm_dims[1], nm_dims[2]))
 
         batch_size = X.shape[0]
 
