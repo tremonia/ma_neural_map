@@ -60,11 +60,11 @@ def nm_config():
         alg_args['ent_coef'] = 0.0
         # learning rate, constant or a schedule function [0,1] -> R+ where 1 is beginning of the training
         # and 0 is the end of the training; default = 3e-4
-        alg_args['lr'] = 1e-4
+        alg_args['lr'] = 3e-4
         # value function loss coefficient in the optimization objective; default = 0.5
         alg_args['vf_coef'] = 0.5
         # gradient norm clipping coefficient; default = 0.5
-        alg_args['max_grad_norm'] = 100
+        alg_args['max_grad_norm'] = 0.5
         # discounting factor; default = 0.99
         alg_args['gamma'] = 0.99
         # advantage estimation discounting factor (lambda in the paper); default = 0.95
@@ -104,9 +104,9 @@ def nm_config():
         # coeffictiant in front of the policy entropy in the total loss function; default = 0.01
         alg_args['ent_coef'] = 0.01
         # gradient is clipped to have global L2 norm no more than this value; default = 0.5
-        alg_args['max_grad_norm'] = 100
+        alg_args['max_grad_norm'] = 0.5
         # learning rate for RMSProp (current implementation has RMSProp hardcoded in); default = 7e-4
-        alg_args['lr'] = 5e-3
+        alg_args['lr'] = 7e-4
         # schedule of learning rate. Can be 'linear', 'constant', or a function [0..1] -> [0..1] that takes fraction
         # of the training progress as input and returns fraction of the learning rate as output; default = 'linear'
         alg_args['lrschedule'] = 'linear'
@@ -170,7 +170,7 @@ def nm_config():
         alg_args['nm_customization_args'] = {'use_nm_customization':True,
                                              'log_model_parameters':True,
                                              'log_path':log_path_global,
-                                             'optimizer':'RMSProp'}
+                                             'optimizer':'GD'}
 
     if network == 'neural_map':
         # neural map's dimensions as a list in order horizontal dim, vertical dim, c_dim
@@ -178,17 +178,18 @@ def nm_config():
         # global read's args; list of dicts / ints where every dict / int contains one layer's parameter(s)
         # has to contain at least 1 dict with conv layer's parameters
         # the last fc layer doesn't have to be specified and always has c_dim neurons
-        alg_args['gr_args'] = [{'nf':8, 'rf':3, 'stride':1, 'pad':[[0,0], [1,1], [1,1], [0,0]]},
-                               {'nf':8, 'rf':3, 'stride':2, 'pad':[[0,0], [0,0], [0,0], [0,0]]},
-                               256]
+        alg_args['gr_args'] = [{'nf':1, 'rf':3, 'stride':1, 'pad':[[0,0], [1,1], [1,1], [0,0]]}]
+                               #{'nf':8, 'rf':3, 'stride':2, 'pad':[[0,0], [0,0], [0,0], [0,0]]}]
         # local write's args; list that contains the number of neurons in the fc layers
         # the last fc layer doesn't have to be specified and always has c_dim neurons
-        alg_args['lw_args'] = [256]
+        alg_args['lw_args'] = [64, 64]
         # final nn's args; list that contains the number of neurons in the fc layers
         # the last fc layer doesn't have to be specified and always has nactions neurons
         alg_args['fnn_args'] = [256]
         # number of actions
         alg_args['nactions'] = 3
+        # initializer of trainable weights
+        alg_args['initializer'] = 'glorot_uniform'
 
 # END PARAMETER SECTION --> @ex.config() #########################################################
 
