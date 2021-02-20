@@ -212,7 +212,7 @@ def learn(
         summary_op = tf.summary.merge_all()
 
     # Instantiate the runner object
-    runner = Runner(env, model, nsteps=nsteps, gamma=gamma, use_nm_customization=nm_customization_args['use_nm_customization'])
+    runner = Runner(env, model, nsteps=nsteps, gamma=gamma, use_nm_customization=nm_customization_args['use_nm_customization'], max_positions = nm_customization_args['max_positions'])
     epinfobuf = deque(maxlen=100)
 
     # Calculate the batch_size

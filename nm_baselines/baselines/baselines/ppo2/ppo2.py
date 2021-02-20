@@ -128,7 +128,9 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
 
 
     # Instantiate the runner object
-    runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam, use_nm_customization=nm_customization_args['use_nm_customization'])
+    runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam,
+                    use_nm_customization=nm_customization_args['use_nm_customization'],
+                    max_positions=nm_customization_args['max_positions'])
     if eval_env is not None:
         eval_runner = Runner(env = eval_env, model = model, nsteps = nsteps, gamma = gamma, lam= lam)
 

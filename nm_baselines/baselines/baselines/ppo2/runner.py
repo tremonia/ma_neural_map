@@ -10,8 +10,9 @@ class Runner(AbstractEnvRunner):
     run():
     - Make a mini batch
     """
-    def __init__(self, *, env, model, nsteps, gamma, lam, use_nm_customization=False):
-        super().__init__(env=env, model=model, nsteps=nsteps, use_nm_customization=use_nm_customization)
+    def __init__(self, *, env, model, nsteps, gamma, lam, use_nm_customization=False, max_positions = [10, 10]):
+        super().__init__(env=env, model=model, nsteps=nsteps,
+                         use_nm_customization=use_nm_customization, max_positions=max_positions)
         # Lambda used in GAE (General Advantage Estimation)
         self.lam = lam
         # Discount rate
@@ -34,7 +35,7 @@ class Runner(AbstractEnvRunner):
                 if self.model.initial_state is not None:
                     # Prepare nm_xy
                     for i in range(self.neural_map.shape[0]):
-                        self.neural_map_xy[i,:] = self.neural_map[i, int(self.pos[i,1]//2), int(self.pos[i,0]//2), :]
+                        self.neural_map_xy[i,:] = self.neural_map[i, int(self.pos[i,1] //self.pos_y_divisor), int(self.pos[i,0] // self.pos_x_divisor), :]
 
                     actions, values, write_vector, neglogpacs = self.model.step(self.obs, S=self.neural_map, M=self.neural_map_xy)
                 else:
@@ -57,7 +58,7 @@ class Runner(AbstractEnvRunner):
 
                     # Update neural map with write vector
                     for i in range(self.neural_map.shape[0]):
-                        self.neural_map[i, int(self.pos[i,1]//2), int(self.pos[i,0]//2), :] = write_vector[i,:]
+                        self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor), int(self.pos[i,0] // self.pos_x_divisor), :] = write_vector[i,:]
 
                 # Take actions in env and look the results
                 # Infos contains a ton of useful informations
@@ -87,7 +88,7 @@ class Runner(AbstractEnvRunner):
 
                 # Prepare nm_xy
                 for i in range(self.neural_map.shape[0]):
-                    self.neural_map_xy[i,:] = self.neural_map[i, int(self.pos[i,1]//2), int(self.pos[i,0]//2), :]
+                    self.neural_map_xy[i,:] = self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor), int(self.pos[i,0] // self.pos_x_divisor), :]
 
                 last_values = self.model.value(self.obs, S=self.neural_map, M=self.neural_map_xy)
             else:

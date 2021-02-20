@@ -170,7 +170,8 @@ def nm_config():
         alg_args['nm_customization_args'] = {'use_nm_customization':True,
                                              'log_model_parameters':True,
                                              'log_path':log_path_global,
-                                             'optimizer':'GD'}
+                                             'optimizer':'GD',
+                                             'max_positions': [10, 10]}
 
     if network == 'neural_map':
         # neural map's dimensions as a list in order horizontal dim, vertical dim, c_dim
