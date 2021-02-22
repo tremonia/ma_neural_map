@@ -211,6 +211,13 @@ def learn(
         writer = tf.summary.FileWriter(nm_customization_args['log_path'], graph = model.sess.graph)
         summary_op = tf.summary.merge_all()
 
+        ep_reward_ph = tf.placeholder(tf.float32, [])
+        ep_reward_var = ep_reward_ph
+        ep_reward_summary = tf.summary.scalar('Reward per Episode', ep_reward_var)
+        ep_length_ph = tf.placeholder(tf.float32, [])
+        ep_length_var = ep_length_ph
+        ep_length_summary = tf.summary.scalar('Length per Episode', ep_length_var)
+
     # Instantiate the runner object
     runner = Runner(env, model, nsteps=nsteps, gamma=gamma, use_nm_customization=nm_customization_args['use_nm_customization'], max_positions = nm_customization_args['max_positions'])
     epinfobuf = deque(maxlen=100)
@@ -227,6 +234,10 @@ def learn(
         epinfobuf.extend(epinfos)
         policy_loss, value_loss, policy_entropy = model.train(obs, states, rewards, masks, actions, values)
         nseconds = time.time()-tstart
+
+        if nm_customization_args['log_model_parameters'] and epinfos:
+            writer.add_summary(model.sess.run(ep_reward_summary, {ep_reward_var:epinfos[0]['r']}), update)
+            writer.add_summary(model.sess.run(ep_length_summary, {ep_length_var:epinfos[0]['l']}), update)
 
         # Calculate the fps (frame per second)
         fps = int((update*nbatch)/nseconds)
