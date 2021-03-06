@@ -266,7 +266,7 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions, initializer='ortho
             for i, params in enumerate(gr_args):
                 # conv layer(s) specified by gr_args
                 if isinstance(params, dict):
-                    h = activ(conv(h, 'gr_conv{}'.format(i), nf=params['nf'], rf=params['rf'], stride=params['stride'], pad=params['pad'], initializer=initializer, init_scale=np.sqrt(2)))
+                    h = activ(conv(h, 'gr_conv{}'.format(i), nf=params['nf'], rf=params['rf'], stride=params['stride'], pad=params['pad'], initializer=initializer, init_scale=np.sqrt(2)), 'gr_conv_relu{}'.format(i))
 
                 # fc layer(s) specified by gr_args
                 else:
@@ -274,15 +274,15 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions, initializer='ortho
                     if isinstance(gr_args[i-1], dict):
                         h = tf.layers.flatten(h)
                         was_flattened = True
-                        h = activ(fc(h, 'gr_fc{}'.format(i), nh=params, initializer=initializer, init_scale=np.sqrt(2)))
+                        h = activ(fc(h, 'gr_fc{}'.format(i), nh=params, initializer=initializer, init_scale=np.sqrt(2)), 'gr_fc_relu{}'.format(i))
                     else:
-                        h = activ(fc(h, 'gr_fc{}'.format(i), nh=params, initializer=initializer, init_scale=np.sqrt(2)))
+                        h = activ(fc(h, 'gr_fc{}'.format(i), nh=params, initializer=initializer, init_scale=np.sqrt(2)), 'gr_fc_relu{}'.format(i))
 
             # flatten if no fc layer has been created so far
             if not was_flattened:
                 h = tf.layers.flatten(h)
             # last fc layer that produces c-dimensional ouput r
-            r = last_activ(fc(h, 'gr_fc{}'.format(len(gr_args)), nh=c_dim, initializer=initializer, init_scale=np.sqrt(2)))
+            r = last_activ(fc(h, 'gr_fc{}'.format(len(gr_args)), nh=c_dim, initializer=initializer, init_scale=np.sqrt(2)), 'gr_fc_tanh')
 
             return r
 
@@ -305,7 +305,7 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions, initializer='ortho
                 batch_size = s_flat.shape[0]
                 nm_reshaped = tf.reshape(nm, [batch_size, -1, c_dim])
 
-                q = tf.matmul(input, W)
+                q = tf.matmul(input, W, name='cr_matmul')
                 a = tf.keras.backend.batch_dot(nm_reshaped, q, (2, 1))
                 a_exp = tf.math.exp(a)
                 norm_fac = tf.reduce_sum(a_exp, 1)
@@ -314,6 +314,8 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions, initializer='ortho
                 alpha_expanded = tf.expand_dims(alpha, -1)
                 nm_scored = tf.math.multiply(alpha_expanded, nm_reshaped)
                 c = tf.reduce_sum(nm_scored, 1)
+                nm_scored = tf.math.multiply(alpha_expanded, nm_reshaped, name='cr_multiply')
+                c = tf.reduce_sum(nm_scored, 1, name='cr_reduce_sum')
 
                 return c
 
@@ -327,14 +329,14 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions, initializer='ortho
             # fc layer(s) specified by lw_args
             h = tf.concat([s_flat, r, c, nm_xy], 1)
             for i, nneurons in enumerate(lw_args):
-                h = activ(fc(h, 'lw_fc{}'.format(i), nh=nneurons, initializer=initializer, init_scale=np.sqrt(2)))
+                h = activ(fc(h, 'lw_fc{}'.format(i), nh=nneurons, initializer=initializer, init_scale=np.sqrt(2)), 'lw_fc_relu{}'.format(i))
 
             # last fc layer that produces c-dimensional ouput w
             if not fnn_args:
                 last_fcl_name = 'lw_fc0'
             else:
                 last_fcl_name = 'lw_fc{}'.format(len(lw_args))
-            w = last_activ(fc(h, last_fcl_name, nh=c_dim, initializer=initializer, init_scale=np.sqrt(2)))
+            w = last_activ(fc(h, last_fcl_name, nh=c_dim, initializer=initializer, init_scale=np.sqrt(2)), 'lw_fc_tanh')
 
             return w
 
@@ -348,7 +350,7 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions, initializer='ortho
             # fc layer(s) specified by lw_args
             h = tf.concat([r, c, w], 1)
             for i, nneurons in enumerate(fnn_args):
-                h = activ(fc(h, 'fnn_fc{}'.format(i), nh=nneurons, initializer=initializer, init_scale=np.sqrt(2)))
+                h = activ(fc(h, 'fnn_fc{}'.format(i), nh=nneurons, initializer=initializer, init_scale=np.sqrt(2)), 'fnn_fc_relu{}'.format(i))
 
             # last fc layer that predicts action
             if not fnn_args:
