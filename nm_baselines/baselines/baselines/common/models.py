@@ -352,15 +352,15 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions, initializer='ortho
                 h = activ(fc(h, 'fnn_fc{}'.format(i), nh=nneurons, initializer=initializer, init_scale=np.sqrt(2)), 'fnn_fc_relu{}'.format(i))
 
             # last fc layer that predicts action
-            if not fnn_args:
-                last_fcl_name = 'fnn_fc0'
-            else:
-                last_fcl_name = 'fnn_fc{}'.format(len(fnn_args))
-            h = activ(fc(h, last_fcl_name, nh=no_actions, initializer=initializer, init_scale=np.sqrt(2)))
-            output = softmax(h)
+            #if not fnn_args:
+            #    last_fcl_name = 'fnn_fc0'
+            #else:
+            #    last_fcl_name = 'fnn_fc{}'.format(len(fnn_args))
+            #h = activ(fc(h, last_fcl_name, nh=no_actions, initializer=initializer, init_scale=np.sqrt(2)))
+            #output = softmax(h)
 
-            return output
-
+            #return output
+            return h
 
         print('\nNeural Map with dimensions [v={}, h={}, c={}] created!\n'.format(nm_dims[0], nm_dims[1], nm_dims[2]))
 
