@@ -259,7 +259,7 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions, initializer='ortho
 
             was_flattened = False
             activ = tf.nn.relu
-            last_activ = tf.nn.tanh
+            last_activ = tf.tanh
 
             # conv and fc layers specified by gr_args
             h = nm
@@ -307,13 +307,12 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions, initializer='ortho
 
                 q = tf.matmul(input, W, name='cr_matmul')
                 a = tf.keras.backend.batch_dot(nm_reshaped, q, (2, 1))
-                a_exp = tf.math.exp(a)
-                norm_fac = tf.reduce_sum(a_exp, 1)
-                norm_fac_expanded = tf.expand_dims(norm_fac, -1)
-                alpha = tf.math.divide(a_exp, norm_fac_expanded)
+                #a_exp = tf.math.exp(a)
+                #norm_fac = tf.reduce_sum(a_exp, 1)
+                #norm_fac_expanded = tf.expand_dims(norm_fac, -1)
+                #alpha = tf.math.divide(a_exp, norm_fac_expanded)
+                alpha = tf.nn.softmax(a, name='cr_softmax')
                 alpha_expanded = tf.expand_dims(alpha, -1)
-                nm_scored = tf.math.multiply(alpha_expanded, nm_reshaped)
-                c = tf.reduce_sum(nm_scored, 1)
                 nm_scored = tf.math.multiply(alpha_expanded, nm_reshaped, name='cr_multiply')
                 c = tf.reduce_sum(nm_scored, 1, name='cr_reduce_sum')
 
@@ -324,7 +323,7 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions, initializer='ortho
             # output: c-dimensional local write candidate vector w
 
             activ = tf.nn.relu
-            last_activ = tf.nn.tanh
+            last_activ = tf.tanh
 
             # fc layer(s) specified by lw_args
             h = tf.concat([s_flat, r, c, nm_xy], 1)
@@ -332,7 +331,7 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions, initializer='ortho
                 h = activ(fc(h, 'lw_fc{}'.format(i), nh=nneurons, initializer=initializer, init_scale=np.sqrt(2)), 'lw_fc_relu{}'.format(i))
 
             # last fc layer that produces c-dimensional ouput w
-            if not fnn_args:
+            if not lw_args:
                 last_fcl_name = 'lw_fc0'
             else:
                 last_fcl_name = 'lw_fc{}'.format(len(lw_args))
@@ -345,7 +344,7 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions, initializer='ortho
             # output: no_actions-dimensional vector
 
             activ = tf.nn.relu
-            softmax = tf.nn.softmax
+            #softmax = tf.nn.softmax
 
             # fc layer(s) specified by lw_args
             h = tf.concat([r, c, w], 1)
