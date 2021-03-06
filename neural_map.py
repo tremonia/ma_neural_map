@@ -34,8 +34,8 @@ def nm_config():
     env_type = None
     seed = int(2511988)
     alg = alg_global
-    num_timesteps = 1e3
-    network = None
+    num_timesteps = 1e6
+    network = 'neural_map'
     gamestate = None
     num_env = 1
     reward_scale = 1.0
@@ -55,7 +55,7 @@ def nm_config():
         # default = None
         alg_args['eval_env'] = None
         # number of steps of the vectorized environment per update (i.e. batch size is nsteps * nenv); default = 2048
-        alg_args['nsteps'] = 2048
+        alg_args['nsteps'] = 32
         # policy entropy coefficient in the optimization objective; default = 0.0
         alg_args['ent_coef'] = 0.0
         # learning rate, constant or a schedule function [0,1] -> R+ where 1 is beginning of the training
@@ -73,9 +73,9 @@ def nm_config():
         alg_args['log_interval'] = 10
         # number of training minibatches per update. For recurrent policies, should be smaller
         # or equal than number of environments run in parallel; default = 4
-        alg_args['nminibatches'] = 4
+        alg_args['nminibatches'] = 1
         # number of training epochs per update; default = 4
-        alg_args['noptepochs'] = 4
+        alg_args['noptepochs'] = 1
         # clipping range, constant or schedule function [0,1] -> R+ where 1 is beginning of the training
         # and 0 is the end of the training; default = 0.2
         alg_args['cliprange'] = 0.2
@@ -170,23 +170,25 @@ def nm_config():
         alg_args['nm_customization_args'] = {'use_nm_customization':True,
                                              'log_model_parameters':True,
                                              'log_path':log_path_global,
-                                             'optimizer':'GD',
+                                             'optimizer':'RMSProp',
                                              'max_positions': [10, 10]}
 
     if network == 'neural_map':
         # neural map's dimensions as a list in order horizontal dim, vertical dim, c_dim
-        alg_args['nm_dims'] = [5, 5, 32]
+        alg_args['nm_dims'] = [5, 5, 8]
         # global read's args; list of dicts / ints where every dict / int contains one layer's parameter(s)
         # has to contain at least 1 dict with conv layer's parameters
         # the last fc layer doesn't have to be specified and always has c_dim neurons
-        alg_args['gr_args'] = [{'nf':1, 'rf':3, 'stride':1, 'pad':[[0,0], [1,1], [1,1], [0,0]]}]
-                               #{'nf':8, 'rf':3, 'stride':2, 'pad':[[0,0], [0,0], [0,0], [0,0]]}]
+        alg_args['gr_args'] = [{'nf':8, 'rf':3, 'stride':1, 'pad':[[0,0], [1,1], [1,1], [0,0]]},
+                               {'nf':8, 'rf':3, 'stride':2, 'pad':[[0,0], [0,0], [0,0], [0,0]]},
+                               48]
+                               #[{'nf':8, 'rf':2, 'stride':1, 'pad':'VALID'}]
         # local write's args; list that contains the number of neurons in the fc layers
         # the last fc layer doesn't have to be specified and always has c_dim neurons
         alg_args['lw_args'] = [64, 64]
         # final nn's args; list that contains the number of neurons in the fc layers
         # the last fc layer doesn't have to be specified and always has nactions neurons
-        alg_args['fnn_args'] = [256]
+        alg_args['fnn_args'] = [64, 64]
         # number of actions
         alg_args['nactions'] = 3
         # initializer of trainable weights
