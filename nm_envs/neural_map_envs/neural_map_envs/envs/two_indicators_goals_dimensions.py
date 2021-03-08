@@ -28,12 +28,16 @@ class Two_Goals_Indicators_Dimensions(gym.Env):
         # determine wright and wrong goal position
         if np.any(self.map[1,:,:]):
             #Indicator 1 -> wright goal position in layer 3, wrong in layer 4
+            self.indicator_position_x = np.nonzero(self.map[1,:,:])[1][0]
+            self.indicator_position_y = np.nonzero(self.map[1,:,:])[0][0]
             self.wright_goal_position_x = np.nonzero(self.map[3,:,:])[1][0]
             self.wright_goal_position_y = np.nonzero(self.map[3,:,:])[0][0]
             self.wrong_goal_position_x = np.nonzero(self.map[4,:,:])[1][0]
             self.wrong_goal_position_y = np.nonzero(self.map[4,:,:])[0][0]
         elif np.any(self.map[2,:,:]):
             # Indicator 2 -> wright goal position in layer 4, wrong in layer 3
+            self.indicator_position_x = np.nonzero(self.map[2,:,:])[1][0]
+            self.indicator_position_y = np.nonzero(self.map[2,:,:])[0][0]
             self.wright_goal_position_x = np.nonzero(self.map[4,:,:])[1][0]
             self.wright_goal_position_y = np.nonzero(self.map[4,:,:])[0][0]
             self.wrong_goal_position_x = np.nonzero(self.map[3,:,:])[1][0]
@@ -114,6 +118,31 @@ class Two_Goals_Indicators_Dimensions(gym.Env):
 
 
     def reset(self):
+        # determine next indicator (layer 1 or 2) randomly
+        if np.random.random_sample() < 0.5:
+            # next indicator in layer 1
+            self.map[1, self.indicator_position_y, self.indicator_position_x] = 1.
+            self.map[2, self.indicator_position_y, self.indicator_position_x] = 0.
+        else:
+            # next indicator in layer 2
+            self.map[1, self.indicator_position_y, self.indicator_position_x] = 0.
+            self.map[2, self.indicator_position_y, self.indicator_position_x] = 1.
+
+        # determine wright and wrong goal position
+        if np.any(self.map[1,:,:]):
+            #Indicator 1 -> wright goal position in layer 3, wrong in layer 4
+            self.wright_goal_position_x = np.nonzero(self.map[3,:,:])[1][0]
+            self.wright_goal_position_y = np.nonzero(self.map[3,:,:])[0][0]
+            self.wrong_goal_position_x = np.nonzero(self.map[4,:,:])[1][0]
+            self.wrong_goal_position_y = np.nonzero(self.map[4,:,:])[0][0]
+        elif np.any(self.map[2,:,:]):
+            # Indicator 2 -> wright goal position in layer 4, wrong in layer 3
+            self.wright_goal_position_x = np.nonzero(self.map[4,:,:])[1][0]
+            self.wright_goal_position_y = np.nonzero(self.map[4,:,:])[0][0]
+            self.wrong_goal_position_x = np.nonzero(self.map[3,:,:])[1][0]
+            self.wrong_goal_position_y = np.nonzero(self.map[3,:,:])[0][0]
+
+
         self.position_x = self.start_position_x
         self.position_y = self.start_position_y
         self.orientation = self.start_orientation
