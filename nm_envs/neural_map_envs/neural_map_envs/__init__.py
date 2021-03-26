@@ -23,3 +23,16 @@ register(
             'start_orientation' : 0,
             'reward_range'  : (-1., 1.)},
 )
+
+register(
+    id='one_room_many_goals_2d-v0',
+    entry_point='neural_map_envs.envs:One_Room_Many_Goals_2D',
+    kwargs={'map_size_vertical'     : 9,
+            'map_size_horizontal'   : 9,
+            'view_straightforward'  : 4,
+            'view_left_right'       : 1,
+            'start_position_x'      : 4,
+            'start_position_y'      : 4,
+            'start_orientation'     : 0,
+            'reward_range'          : (-2., 1.5)},
+)
