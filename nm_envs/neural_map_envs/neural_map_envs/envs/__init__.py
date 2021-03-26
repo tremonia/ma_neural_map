@@ -1,1 +1,2 @@
 from neural_map_envs.envs.two_indicators_goals_dimensions import Two_Goals_Indicators_Dimensions
+from neural_map_envs.envs.one_key_three_boxes_2D import One_Key_Three_Boxes_2D
