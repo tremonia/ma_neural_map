@@ -13,6 +13,7 @@ except ImportError:
     MPI = None
 from baselines.ppo2.runner import Runner
 
+from exp import ex
 
 def constfn(val):
     def f(_):
@@ -121,17 +122,10 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
 
     if nm_customization_args['log_model_parameters']:
         tf.contrib.slim.model_analyzer.analyze_vars(tf.trainable_variables(), print_info=True)
-        for var in tf.trainable_variables():
-            tf.summary.histogram(var.name[:-2], var)
+        #for var in tf.trainable_variables():
+        #    tf.summary.histogram(var.name[:-2], var)
         writer = tf.summary.FileWriter(nm_customization_args['log_path'], graph = model.sess.graph)
-        summary_op = tf.summary.merge_all()
-
-        ep_reward_ph = tf.placeholder(tf.float32, [])
-        ep_reward_var = ep_reward_ph
-        ep_reward_summary = tf.summary.scalar('Reward per Episode', ep_reward_var)
-        ep_length_ph = tf.placeholder(tf.float32, [])
-        ep_length_var = ep_length_ph
-        ep_length_summary = tf.summary.scalar('Length per Episode', ep_length_var)
+        #summary_op = tf.summary.merge_all()
 
     # Instantiate the runner object
     runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam,
@@ -167,8 +161,8 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
         obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run() #pylint: disable=E0632
 
         if nm_customization_args['log_model_parameters'] and epinfos:
-            writer.add_summary(model.sess.run(ep_reward_summary, {ep_reward_var:epinfos[0]['r']}), update)
-            writer.add_summary(model.sess.run(ep_length_summary, {ep_length_var:epinfos[0]['l']}), update)
+            ex.log_scalar('ep_reward', epinfos[0]['r'], update)
+            ex.log_scalar('ep_length', epinfos[0]['l'], update)
 
         if eval_env is not None:
             eval_obs, eval_returns, eval_masks, eval_actions, eval_values, eval_neglogpacs, eval_states, eval_epinfos = eval_runner.run() #pylint: disable=E0632
@@ -249,8 +243,8 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
             print('Saving to', savepath)
             model.save(savepath)
 
-        if nm_customization_args['log_model_parameters']:
-            writer.add_summary(model.sess.run(summary_op))
+        #if nm_customization_args['log_model_parameters']:
+        #    writer.add_summary(model.sess.run(summary_op))
 
     if nm_customization_args['log_model_parameters']:
         writer.flush()

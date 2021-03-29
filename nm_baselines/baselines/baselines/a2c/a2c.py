@@ -16,6 +16,8 @@ from collections import deque
 
 from tensorflow import losses
 
+from exp import ex
+
 class Model(object):
 
     """
@@ -189,7 +191,6 @@ def learn(
 
     '''
 
-
     set_global_seeds(seed)
 
     # Get the nb of env
@@ -206,17 +207,10 @@ def learn(
 
     if nm_customization_args['log_model_parameters']:
         tf.contrib.slim.model_analyzer.analyze_vars(tf.trainable_variables(), print_info=True)
-        for var in tf.trainable_variables():
-            tf.summary.histogram(var.name[:-2], var)
+        #for var in tf.trainable_variables():
+        #    tf.summary.histogram(var.name[:-2], var)
         writer = tf.summary.FileWriter(nm_customization_args['log_path'], graph = model.sess.graph)
-        summary_op = tf.summary.merge_all()
-
-        ep_reward_ph = tf.placeholder(tf.float32, [])
-        ep_reward_var = ep_reward_ph
-        ep_reward_summary = tf.summary.scalar('Reward per Episode', ep_reward_var)
-        ep_length_ph = tf.placeholder(tf.float32, [])
-        ep_length_var = ep_length_ph
-        ep_length_summary = tf.summary.scalar('Length per Episode', ep_length_var)
+        #summary_op = tf.summary.merge_all()
 
     # Instantiate the runner object
     runner = Runner(env, model, nsteps=nsteps, gamma=gamma, use_nm_customization=nm_customization_args['use_nm_customization'], max_positions = nm_customization_args['max_positions'])
@@ -236,8 +230,8 @@ def learn(
         nseconds = time.time()-tstart
 
         if nm_customization_args['log_model_parameters'] and epinfos:
-            writer.add_summary(model.sess.run(ep_reward_summary, {ep_reward_var:epinfos[0]['r']}), update)
-            writer.add_summary(model.sess.run(ep_length_summary, {ep_length_var:epinfos[0]['l']}), update)
+            ex.log_scalar('ep_reward', epinfos[0]['r'], update)
+            ex.log_scalar('ep_length', epinfos[0]['l'], update)
 
         # Calculate the fps (frame per second)
         fps = int((update*nbatch)/nseconds)
@@ -255,8 +249,8 @@ def learn(
             logger.record_tabular("eplenmean", safemean([epinfo['l'] for epinfo in epinfobuf]))
             logger.dump_tabular()
 
-        if nm_customization_args['log_model_parameters']:
-            writer.add_summary(model.sess.run(summary_op))
+        #if nm_customization_args['log_model_parameters']:
+        #    writer.add_summary(model.sess.run(summary_op))
 
     if nm_customization_args['log_model_parameters']:
         writer.flush()
