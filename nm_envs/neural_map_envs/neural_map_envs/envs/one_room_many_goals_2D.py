@@ -52,7 +52,7 @@ class One_Room_Many_Goals_2D(gym.Env):
     def step(self, action):
         # don't do anything if previous state was a terminal state
         if self.last_done:
-            return {"position" : np.array((int(self.position_x), int(self.position_y))), "observation" : self.last_obs}, 0., self.last_done, {}
+            return {"position" : np.array((int(self.position_x), int(self.position_y), int(self.orientation))), "observation" : self.last_obs}, 0., self.last_done, {}
         else:
             # if step_counter reaches its maximum, terminate episode
             if self.step_counter == 1000.:
@@ -88,7 +88,7 @@ class One_Room_Many_Goals_2D(gym.Env):
                 elif self.position_x == self.goal2_position_x and self.position_y == self.goal2_position_y:
                     if self.internal_state == 'FoundGoal1':
                         reward = 1.
-                        self.last_done = False
+                        self.last_done = True
                         self.internal_state = 'FoundGoal2'
                     else:
                         reward = 0.
@@ -145,10 +145,7 @@ class One_Room_Many_Goals_2D(gym.Env):
             self.step_counter += 1.
             reward -= 0.001
 
-            print(self.map[1,:,:])
-            print(self.map[2,:,:])
-
-            return {"position": np.array((int(self.position_x), int(self.position_y), int(self.orientation))), "observation": self.last_obs}, reward, self.last_done, {'goal1x': self.goal1_position_x, 'goal1y': self.goal1_position_y, 'goal2x': self.goal2_position_x, 'goal2y': self.goal2_position_y}
+            return {"position": np.array((int(self.position_x), int(self.position_y), int(self.orientation))), "observation": self.last_obs}, reward, self.last_done, {}
 
 
     def reset(self):
