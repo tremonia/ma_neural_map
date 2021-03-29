@@ -39,7 +39,7 @@ class PolicyWithValue(object):
         self.state = tf.constant([])
         self.initial_state = None
         self.__dict__.update(tensors)
-        
+
         vf_latent = vf_latent if vf_latent is not None else latent
 
         vf_latent = tf.layers.flatten(vf_latent)
@@ -128,10 +128,10 @@ def build_policy(env, policy_network, value_network=None,  normalize_observation
     def policy_fn(nbatch=None, nsteps=None, sess=None, observ_placeholder=None, use_nm_customization=False):
         if use_nm_customization:
             print('policy_fn function uses neural map’s customization')
-            ob_space = spaces.Box(low=env.observation_space.low[0], high=env.observation_space.high[0], shape=(env.observation_space.shape[0]-2,), dtype=env.observation_space.dtype.name)
+            ob_space = spaces.Box(low=env.observation_space.low[0], high=env.observation_space.high[0], shape=(env.observation_space.shape[0]-3,), dtype=env.observation_space.dtype.name)
         else:
             ob_space = env.observation_space
-        
+
         X = observ_placeholder if observ_placeholder is not None else observation_placeholder(ob_space, batch_size=nbatch)
 
         extra_tensors = {}
@@ -189,4 +189,3 @@ def _normalize_clip_observation(x, clip_range=[-5.0, 5.0]):
     rms = RunningMeanStd(shape=x.shape[1:])
     norm_x = tf.clip_by_value((x - rms.mean) / rms.std, min(clip_range), max(clip_range))
     return norm_x, rms
-

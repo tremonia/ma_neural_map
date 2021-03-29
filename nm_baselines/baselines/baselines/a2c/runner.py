@@ -63,8 +63,8 @@ class Runner(AbstractEnvRunner):
                 # Take actions in env and look the results
                 # Infos contains a ton of useful informations
                 tmp, rewards, dones, infos = self.env.step(actions)
-                obs = tmp[:,:-2]
-                self.pos = tmp[:,-2:]
+                obs = tmp[:,:-3]
+                self.pos = tmp[:,-3:]
             else:
                 obs, rewards, dones, infos = self.env.step(actions)
 
