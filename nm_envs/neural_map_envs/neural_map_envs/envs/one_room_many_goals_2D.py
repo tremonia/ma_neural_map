@@ -7,15 +7,28 @@ import numpy as np
 class One_Room_Many_Goals_2D(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, map_size_vertical, map_size_horizontal, view_straightforward, view_left_right, start_position_x, start_position_y, start_orientation, reward_range):
+    def __init__(self, map_size_vertical, map_size_horizontal, no_goals, view_straightforward, view_left_right, start_position_x, start_position_y, start_orientation, reward_range, max_no_steps):
 
         # set some parameters
+        self.map_size_vertical = map_size_vertical
+        self.map_size_horizontal = map_size_horizontal
+        self.no_goals = no_goals
         self.view_straightforward = view_straightforward
         self.view_left_right = view_left_right
         self.reward_range = reward_range
+        self.max_no_steps = max_no_steps
+        self.living_reward = 0.5 / self.max_no_steps
+
+        # determine goal rewards
+        if self.no_goals == 2:
+            self.goal_rewards = [0.25, 0.75]
+        elif self.no_goals == 3:
+            self.goal_rewards = [0.125, 0.125, 0.75]
+        elif self.no_goals == 4:
+            self.goal_rewards = [0.1, 0.1, 0.1, 0.7]
 
         # build map with dummy surrounding
-        self.map = np.zeros((3, map_size_vertical + 2*(self.view_straightforward-1), map_size_horizontal +2*(self.view_straightforward-1)), dtype=np.float32)
+        self.map = np.zeros((self.no_goals + 1, map_size_vertical + 2*(self.view_straightforward-1), map_size_horizontal +2*(self.view_straightforward-1)), dtype=np.float32)
         self.map[0,:,:] = 1
         self.map[0, (self.view_straightforward-1):(1-self.view_straightforward), (self.view_straightforward-1):(1-self.view_straightforward)] = 0
 
@@ -25,13 +38,35 @@ class One_Room_Many_Goals_2D(gym.Env):
         self.start_orientation = self.orientation = start_orientation  # down=0, right=1, up=2, left=3
 
         # determine random goal positions and place corresponding indicators in the map
-        self.goal1_position_x = np.random.random_integers(self.view_straightforward-1, self.map.shape[2]-self.view_straightforward)
-        self.goal1_position_y = np.random.random_integers(self.view_straightforward-1, np.floor(self.map.shape[1]/2.))
+        goal1_index = np.random.random_integers(0,80)
+        while goal1_index == 40:
+            goal1_index = np.random.random_integers(0,80)
+        self.goal1_position_x = (goal1_index % self.map_size_horizontal) + self.view_straightforward -1
+        self.goal1_position_y = (goal1_index // self.map_size_vertical) + self.view_straightforward -1
         self.map[1, self.goal1_position_y, self.goal1_position_x] = 1.
 
-        self.goal2_position_x = np.random.random_integers(self.view_straightforward-1, self.map.shape[2]-self.view_straightforward)
-        self.goal2_position_y = np.random.random_integers(np.ceil(self.map.shape[1]/2.), self.map.shape[1]-self.view_straightforward)
+        goal2_index = np.random.random_integers(0,80)
+        while goal2_index == goal1_index:
+            goal2_index = np.random.random_integers(0,80)
+        self.goal2_position_x = (goal2_index % self.map_size_horizontal) + self.view_straightforward -1
+        self.goal2_position_y = (goal2_index // self.map_size_vertical) + self.view_straightforward -1
         self.map[2, self.goal2_position_y, self.goal2_position_x] = 1.
+
+        if self.no_goals > 2:
+            goal3_index = np.random.random_integers(0,80)
+            while goal3_index == goal2_index:
+                goal3_index = np.random.random_integers(0,80)
+            self.goal3_position_x = (goal3_index % self.map_size_horizontal) + self.view_straightforward -1
+            self.goal3_position_y = (goal3_index // self.map_size_vertical) + self.view_straightforward -1
+            self.map[3, self.goal3_position_y, self.goal3_position_x] = 1.
+
+        if self.no_goals > 3:
+            goal4_index = np.random.random_integers(0,80)
+            while goal4_index == goal3_index:
+                goal4_index = np.random.random_integers(0,80)
+            self.goal4_position_x = (goal4_index % self.map_size_horizontal) + self.view_straightforward -1
+            self.goal4_position_y = (goal4_index // self.map_size_vertical) + self.view_straightforward -1
+            self.map[4, self.goal4_position_y, self.goal4_position_x] = 1.
 
         # set observation and action space
         observation_shape = (self.map.shape[0], self.view_straightforward, 2*self.view_left_right+1)
@@ -46,6 +81,7 @@ class One_Room_Many_Goals_2D(gym.Env):
         self.internal_state = 'Empty'
         self.step_counter = 0.
 
+
         #self.last_action = None  # for rendering
 
 
@@ -55,10 +91,9 @@ class One_Room_Many_Goals_2D(gym.Env):
             return {"position" : np.array((int(self.position_x), int(self.position_y), int(self.orientation))), "observation" : self.last_obs}, 0., self.last_done, {}
         else:
             # if step_counter reaches its maximum, terminate episode
-            if self.step_counter == 1000.:
+            if self.step_counter == self.max_no_steps:
                 self.last_done = True
-                reward = -1.
-                #print('\nStep counter reached maximum!')
+                return {"position" : np.array((int(self.position_x), int(self.position_y), int(self.orientation))), "observation" : self.last_obs}, -0.5, self.last_done, {}
             else:
             # perform action, i.e. adjust self.position_x, self.position_y, self.orientation
                 if action == 0 or action == 2:
@@ -78,7 +113,7 @@ class One_Room_Many_Goals_2D(gym.Env):
                 # determine reward, done and internal_state
                 if self.position_x == self.goal1_position_x and self.position_y == self.goal1_position_y:
                     if self.internal_state == 'Empty':
-                        reward = 0.5
+                        reward = self.goal_rewards[0]
                         self.last_done = False
                         self.internal_state = 'FoundGoal1'
                     else:
@@ -87,30 +122,36 @@ class One_Room_Many_Goals_2D(gym.Env):
 
                 elif self.position_x == self.goal2_position_x and self.position_y == self.goal2_position_y:
                     if self.internal_state == 'FoundGoal1':
-                        reward = 1.
-                        self.last_done = True
+                        reward = self.goal_rewards[1]
+                        if self.no_goals == 2:
+                            self.last_done = True
+                        else:
+                            self.last_done = False
                         self.internal_state = 'FoundGoal2'
                     else:
                         reward = 0.
                         self.last_done = False
 
-                #elif self.position_x == self.box2_position_x and self.position_y == self.box2_position_y:
-                #    if self.internal_state == 'FoundBox1':
-                #        reward = 0.5
-                #        self.last_done = False
-                #        self.internal_state = 'FoundBox2'
-                #    else:
-                #        reward = 0.0
-                #        self.last_done = False
+                elif self.position_x == self.goal3_position_x and self.position_y == self.goal3_position_y and self.no_goals > 2:
+                    if self.internal_state == 'FoundGoal2':
+                        reward = self.goal_rewards[2]
+                        if self.no_goals == 3:
+                            self.last_done = True
+                        else:
+                            self.last_done = False
+                        self.internal_state = 'FoundGoal3'
+                    else:
+                        reward = 0.0
+                        self.last_done = False
 
-                #elif self.position_x == self.box3_position_x and self.position_y == self.box3_position_y:
-                #    if self.internal_state == 'FoundBox2':
-                #        reward = 1.
-                #        self.last_done = True
-                #        self.internal_state = 'FoundBox3'
-                #    else:
-                #        reward = 0.
-                #        self.last_done = False
+                elif self.position_x == self.goal4_position_x and self.position_y == self.goal4_position_y and self.no_goals > 3:
+                    if self.internal_state == 'FoundGoal3':
+                        reward = self.goal_rewards[3]
+                        self.last_done = True
+                        self.internal_state = 'FoundGoal4'
+                    else:
+                        reward = 0.
+                        self.last_done = False
 
                 else:
                     reward = 0.
@@ -143,24 +184,50 @@ class One_Room_Many_Goals_2D(gym.Env):
                 self.last_obs = np.flip(np.transpose(np.flip(self.map[:, y_low:y_high, x_low:x_high], 2), [0, 2, 1]), 2)
 
             self.step_counter += 1.
-            reward -= 0.001
+            reward -= self.living_reward
 
             return {"position": np.array((int(self.position_x), int(self.position_y), int(self.orientation))), "observation": self.last_obs}, reward, self.last_done, {}
 
 
     def reset(self):
-        #first delete / reset old goal indicators
+        # first delete / reset old goal indicators
         self.map[1, self.goal1_position_y, self.goal1_position_x] = 0.
         self.map[2, self.goal2_position_y, self.goal2_position_x] = 0.
+        if self.no_goals > 2:
+            self.map[3, self.goal3_position_y, self.goal3_position_x] = 0.
+        if self.no_goals > 3:
+            self.map[4, self.goal4_position_y, self.goal4_position_x] = 0.
 
         # determine random goal positions and place corresponding indicators in the map
-        self.goal1_position_x = np.random.random_integers(self.view_straightforward-1, self.map.shape[2]-self.view_straightforward)
-        self.goal1_position_y = np.random.random_integers(self.view_straightforward-1, np.floor(self.map.shape[1]/2.))
+        goal1_index = np.random.random_integers(0,80)
+        while goal1_index==40:
+            goal1_index = np.random.random_integers(0,80)
+        self.goal1_position_x = (goal1_index % self.map_size_horizontal) + self.view_straightforward -1
+        self.goal1_position_y = (goal1_index // self.map_size_vertical) + self.view_straightforward -1
         self.map[1, self.goal1_position_y, self.goal1_position_x] = 1.
 
-        self.goal2_position_x = np.random.random_integers(self.view_straightforward-1, self.map.shape[2]-self.view_straightforward)
-        self.goal2_position_y = np.random.random_integers(np.ceil(self.map.shape[1]/2.), self.map.shape[1]-self.view_straightforward)
+        goal2_index = np.random.random_integers(0,80)
+        while goal2_index==goal1_index:
+            goal2_index = np.random.random_integers(0,80)
+        self.goal2_position_x = (goal2_index % self.map_size_horizontal) + self.view_straightforward -1
+        self.goal2_position_y = (goal2_index // self.map_size_vertical) + self.view_straightforward -1
         self.map[2, self.goal2_position_y, self.goal2_position_x] = 1.
+
+        if self.no_goals > 2:
+            goal3_index = np.random.random_integers(0,80)
+            while goal3_index==goal2_index:
+                goal3_index = np.random.random_integers(0,80)
+            self.goal3_position_x = (goal3_index % self.map_size_horizontal) + self.view_straightforward -1
+            self.goal3_position_y = (goal3_index // self.map_size_vertical) + self.view_straightforward -1
+            self.map[3, self.goal3_position_y, self.goal3_position_x] = 1.
+
+        if self.no_goals > 3:
+            goal4_index = np.random.random_integers(0,80)
+            while goal4_index == goal3_index:
+                goal4_index = np.random.random_integers(0,80)
+            self.goal4_position_x = (goal4_index % self.map_size_horizontal) + self.view_straightforward -1
+            self.goal4_position_y = (goal4_index // self.map_size_vertical) + self.view_straightforward -1
+            self.map[4, self.goal4_position_y, self.goal4_position_x] = 1.
 
         # reset internal variables
         self.position_x = self.start_position_x

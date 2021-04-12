@@ -29,10 +29,12 @@ register(
     entry_point='neural_map_envs.envs:One_Room_Many_Goals_2D',
     kwargs={'map_size_vertical'     : 9,
             'map_size_horizontal'   : 9,
+            'no_goals'              : 3,
             'view_straightforward'  : 4,
             'view_left_right'       : 1,
             'start_position_x'      : 4,
             'start_position_y'      : 4,
             'start_orientation'     : 0,
-            'reward_range'          : (-2., 1.5)},
+            'reward_range'          : (-1., 1.),
+            'max_no_steps'          : 1000.}
 )
