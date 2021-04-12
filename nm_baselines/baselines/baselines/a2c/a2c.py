@@ -35,7 +35,6 @@ class Model(object):
     def __init__(self, policy, env, nsteps,
             ent_coef=0.01, vf_coef=0.5, max_grad_norm=0.5, lr=7e-4,
             alpha=0.99, epsilon=1e-5, total_timesteps=int(80e6), lrschedule='linear',
-                 use_nm_customization=False,
                  optimizer = 'RMSProp'):
 
         self.sess = sess = tf_util.get_session()
@@ -45,10 +44,10 @@ class Model(object):
 
         with tf.variable_scope('a2c_model', reuse=tf.AUTO_REUSE):
             # step_model is used for sampling
-            step_model = policy(nenvs, 1, sess, use_nm_customization=use_nm_customization)
+            step_model = policy(nenvs, 1, sess)
 
             # train_model is used to train our network
-            train_model = policy(nbatch, nsteps, sess, use_nm_customization=use_nm_customization)
+            train_model = policy(nbatch, nsteps, sess)
 
         A = tf.placeholder(train_model.action.dtype, train_model.action.shape)
         ADV = tf.placeholder(tf.float32, [nbatch])
@@ -200,7 +199,6 @@ def learn(
     # Instantiate the model object (that creates step_model and train_model)
     model = Model(policy=policy, env=env, nsteps=nsteps, ent_coef=ent_coef, vf_coef=vf_coef,
         max_grad_norm=max_grad_norm, lr=lr, alpha=alpha, epsilon=epsilon, total_timesteps=total_timesteps, lrschedule=lrschedule,
-                  use_nm_customization=nm_customization_args['use_nm_customization'],
                   optimizer = nm_customization_args['optimizer'])
     if load_path is not None:
         model.load(load_path)
