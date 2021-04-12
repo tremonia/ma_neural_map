@@ -27,8 +27,24 @@ class Runner(AbstractEnvRunner):
             # Given observations, take action and value (V(s))
             # We already have self.obs because Runner superclass run self.obs[:] = env.reset() on init
 
+            # Prepare nm_xy
+            for i in range(self.neural_map.shape[0]):
+                if self.use_extended_write_op:
+                    self.neural_map_xy[i,0,:] = self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor), int(self.pos[i,0] // self.pos_x_divisor), :]
+
+                    if self.pos[i,2] == 0:
+                        self.neural_map_xy[i,1,:] = self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor) + 1, int(self.pos[i,0] // self.pos_x_divisor), :]
+                    elif self.pos[i,2] == 1:
+                        self.neural_map_xy[i,1,:] = self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor), int(self.pos[i,0] // self.pos_x_divisor) + 1, :]
+                    elif self.pos[i,2] == 2:
+                        self.neural_map_xy[i,1,:] = self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor) - 1, int(self.pos[i,0] // self.pos_x_divisor), :]
+                    elif self.pos[i,2] == 3:
+                        self.neural_map_xy[i,1,:] = self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor), int(self.pos[i,0] // self.pos_x_divisor) - 1, :]
 
                 else:
+                    self.neural_map_xy[i,:] = self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor), int(self.pos[i,0] // self.pos_x_divisor), :]
+
+            actions, values, write_vector, _ = self.model.step(self.obs, S=self.neural_map, M=self.neural_map_xy)
 
             # Append the experiences
             mb_obs.append(np.copy(self.obs))
@@ -40,6 +56,19 @@ class Runner(AbstractEnvRunner):
             mb_nm.append(self.neural_map.copy())
             mb_nm_xy.append(self.neural_map_xy.copy())
 
+            # Update neural map with write vector
+            for i in range(self.neural_map.shape[0]):
+                if self.use_extended_write_op:
+                    self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor), int(self.pos[i,0] // self.pos_x_divisor), :] = write_vector[i,0,:]
+
+                    if self.pos[i,2] == 0:
+                        self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor) + 1, int(self.pos[i,0] // self.pos_x_divisor), :] = write_vector[i,1,:]
+                    elif self.pos[i,2] == 1:
+                        self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor), int(self.pos[i,0] // self.pos_x_divisor) + 1, :] = write_vector[i,1,:]
+                    elif self.pos[i,2] == 2:
+                        self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor) - 1, int(self.pos[i,0] // self.pos_x_divisor), :] = write_vector[i,1,:]
+                    elif self.pos[i,2] == 3:
+                        self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor), int(self.pos[i,0] // self.pos_x_divisor) - 1, :] = write_vector[i,1,:]
 
                 else:
                     self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor), int(self.pos[i,0] // self.pos_x_divisor), :] = write_vector[i,:]
@@ -74,7 +103,25 @@ class Runner(AbstractEnvRunner):
         mb_nm_xy = mb_nm_xy.swapaxes(0, 1).reshape(mb_nm_xy.shape[0] * mb_nm_xy.shape[1], *mb_nm_xy.shape[2:])
         if self.gamma > 0.0:
             # Discount/bootstrap off value fn
+
+            # Prepare nm_xy
+            for i in range(self.neural_map.shape[0]):
+                if self.use_extended_write_op:
+                    self.neural_map_xy[i,0,:] = self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor), int(self.pos[i,0] // self.pos_x_divisor), :]
+
+                    if self.pos[i,2] == 0:
+                        self.neural_map_xy[i,1,:] = self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor) + 1, int(self.pos[i,0] // self.pos_x_divisor), :]
+                    elif self.pos[i,2] == 1:
+                        self.neural_map_xy[i,1,:] = self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor), int(self.pos[i,0] // self.pos_x_divisor) + 1, :]
+                    elif self.pos[i,2] == 2:
+                        self.neural_map_xy[i,1,:] = self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor) - 1, int(self.pos[i,0] // self.pos_x_divisor), :]
+                    elif self.pos[i,2] == 3:
+                        self.neural_map_xy[i,1,:] = self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor), int(self.pos[i,0] // self.pos_x_divisor) - 1, :]
+
                 else:
+                    self.neural_map_xy[i,:] = self.neural_map[i, int(self.pos[i,1] // self.pos_y_divisor), int(self.pos[i,0] // self.pos_x_divisor), :]
+
+            last_values = self.model.value(self.obs, S=self.neural_map, M=self.neural_map_xy).tolist()
 
             for n, (rewards, dones, value) in enumerate(zip(mb_rewards, mb_dones, last_values)):
                 rewards = rewards.tolist()

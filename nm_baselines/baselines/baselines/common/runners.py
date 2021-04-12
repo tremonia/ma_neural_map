@@ -20,7 +20,10 @@ class AbstractEnvRunner(ABC):
         # Init neural map's internal memory
         self.neural_map = model.initial_state
 
+        if self.use_extended_write_op:
+            self.neural_map_xy = np.zeros((self.neural_map.shape[0], 2, self.neural_map.shape[3]), dtype=self.neural_map.dtype.name)
         else:
+            self.neural_map_xy = np.zeros((self.neural_map.shape[0], self.neural_map.shape[3]), dtype=self.neural_map.dtype.name)
 
         self.pos_x_divisor = int(np.ceil(max_positions[0]/self.neural_map.shape[1]))
         self.pos_y_divisor = int(np.ceil(max_positions[1]/self.neural_map.shape[2]))
