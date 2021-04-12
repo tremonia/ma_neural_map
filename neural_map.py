@@ -234,6 +234,7 @@ def nm_main(env,
     bl_args.save_video_length = save_video_length
     bl_args.log_path = log_path
     bl_args.play = play
+    bl_args.env_args = env_args
 
     if MPI is None or MPI.COMM_WORLD.Get_rank() == 0:
         rank = 0
