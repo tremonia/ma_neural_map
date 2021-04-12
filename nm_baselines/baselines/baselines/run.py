@@ -70,7 +70,7 @@ def train(args, extra_args):
     else:
         if alg_kwargs.get('network') is None:
             alg_kwargs['network'] = get_default_network(env_type)
-    
+
     print('Training {} on {}:{} with arguments \n{}'.format(args.alg, env_type, env_id, alg_kwargs))
 
     model = learn(
@@ -113,8 +113,9 @@ def build_env(args):
         get_session(config=config)
 
         flatten_dict_observations = alg not in {'her'}
-        env = make_vec_env(env_id, env_type, args.num_env or 1, seed, reward_scale=args.reward_scale, flatten_dict_observations=flatten_dict_observations)
-
+        env = make_vec_env(env_id, env_type, args.num_env or 1, seed,
+                           reward_scale=args.reward_scale, flatten_dict_observations=flatten_dict_observations,
+                           env_kwargs = args.env_args)
         if env_type == 'mujoco':
             env = VecNormalize(env, use_tf=True)
 

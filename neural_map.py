@@ -46,6 +46,8 @@ def nm_config():
 
     log_path = log_path_global
 
+    env_args = {'max_no_steps': 1000., 'no_goals': 2}
+
     # alg's parameters
     alg_args = {}
 
@@ -214,6 +216,7 @@ def nm_main(env,
             save_video_length,
             play,
             log_path,
+            env_args,
             alg_args):
 
     bl_args = bl_arg_class()
