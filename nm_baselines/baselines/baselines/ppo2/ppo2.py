@@ -25,6 +25,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
             log_interval=10, nminibatches=1, noptepochs=4, cliprange=0.2,
             save_interval=0, load_path=None, model_fn=None, update_fn=None, init_fn=None, mpi_rank_weight=1, comm=None,
           nm_customization_args={'use_nm_customization':False,
+          nm_customization_args={'use_extended_write_op':False,
                                  'log_model_parameters':False,
                                  'optimizer':'Adam'},
           **network_kwargs):
@@ -130,6 +131,7 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
     # Instantiate the runner object
     runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam,
                     use_nm_customization=nm_customization_args['use_nm_customization'],
+                    use_extended_write_op=nm_customization_args['use_extended_write_op'],
                     max_positions=nm_customization_args['max_positions'])
     if eval_env is not None:
         eval_runner = Runner(env = eval_env, model = model, nsteps = nsteps, gamma = gamma, lam= lam)
