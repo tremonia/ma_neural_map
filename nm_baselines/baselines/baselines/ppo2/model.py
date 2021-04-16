@@ -26,7 +26,6 @@ class Model(object):
     """
     def __init__(self, *, policy, ob_space, ac_space, nbatch_act, nbatch_train,
                 nsteps, ent_coef, vf_coef, max_grad_norm, mpi_rank_weight=1, comm=None, microbatch_size=None,
-                 use_nm_customization=False,
                  optimizer='Adam'):
         self.sess = sess = get_session()
 
@@ -36,13 +35,13 @@ class Model(object):
         with tf.variable_scope('ppo2_model', reuse=tf.AUTO_REUSE):
             # CREATE OUR TWO MODELS
             # act_model that is used for sampling
-            act_model = policy(nbatch_act, 1, sess, use_nm_customization=use_nm_customization)
-            
+            act_model = policy(nbatch_act, 1, sess)
+
             # Train model for training
             if microbatch_size is None:
-                train_model = policy(nbatch_train, nsteps, sess, use_nm_customization=use_nm_customization)
+                train_model = policy(nbatch_train, nsteps, sess)
             else:
-                train_model = policy(microbatch_size, nsteps, sess, use_nm_customization=use_nm_customization)
+                train_model = policy(microbatch_size, nsteps, sess)
 
         # CREATE THE PLACEHOLDERS
         self.A = A = train_model.pdtype.sample_placeholder([None])
@@ -140,8 +139,8 @@ class Model(object):
         advs = returns - values
 
         # Normalize the advantages
-        advs = (advs - advs.mean()) / (advs.std() + 1e-8) 
-        
+        advs = (advs - advs.mean()) / (advs.std() + 1e-8)
+
         td_map = {
             self.train_model.X : obs,
             self.A : actions,
@@ -160,4 +159,3 @@ class Model(object):
             self.stats_list + [self._train_op],
             td_map
         )[:-1]
-

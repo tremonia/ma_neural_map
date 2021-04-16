@@ -24,7 +24,6 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
             log_interval=10, nminibatches=1, noptepochs=4, cliprange=0.2,
             save_interval=0, load_path=None, model_fn=None, update_fn=None, init_fn=None, mpi_rank_weight=1, comm=None,
-          nm_customization_args={'use_nm_customization':False,
           nm_customization_args={'use_extended_write_op':False,
                                  'log_model_parameters':False,
                                  'optimizer':'Adam'},
@@ -115,7 +114,6 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
     model = model_fn(policy=policy, ob_space=ob_space, ac_space=ac_space, nbatch_act=nenvs, nbatch_train=nbatch_train,
                     nsteps=nsteps, ent_coef=ent_coef, vf_coef=vf_coef,
                     max_grad_norm=max_grad_norm, comm=comm, mpi_rank_weight=mpi_rank_weight,
-                    use_nm_customization=nm_customization_args['use_nm_customization'],
                     optimizer=nm_customization_args['optimizer'])
 
     if load_path is not None:
@@ -130,7 +128,6 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
 
     # Instantiate the runner object
     runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam,
-                    use_nm_customization=nm_customization_args['use_nm_customization'],
                     use_extended_write_op=nm_customization_args['use_extended_write_op'],
                     max_positions=nm_customization_args['max_positions'])
     if eval_env is not None:
@@ -201,13 +198,8 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=1
                     end = start + envsperbatch
                     mbenvinds = envinds[start:end]
                     mbflatinds = flatinds[mbenvinds].ravel()
-                    if nm_customization_args['use_nm_customization']:
-                        slices = (arr[mbflatinds] for arr in (obs, returns, masks, actions, values, neglogpacs, states))
-                        mblossvals.append(model.train(lrnow, cliprangenow, *slices))
-                    else: #recurrent model which is NOT neural map, probably doesn't work atm
-                        slices = (arr[mbflatinds] for arr in (obs, returns, masks, actions, values, neglogpacs))
-                        mbstates = states[mbenvinds]
-                        mblossvals.append(model.train(lrnow, cliprangenow, *slices, mbstates))
+                    slices = (arr[mbflatinds] for arr in (obs, returns, masks, actions, values, neglogpacs, states))
+                    mblossvals.append(model.train(lrnow, cliprangenow, *slices))
 
         # Feedforward --> get losses --> update
         lossvals = np.mean(mblossvals, axis=0)
