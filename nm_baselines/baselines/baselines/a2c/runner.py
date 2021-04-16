@@ -97,6 +97,7 @@ class Runner(AbstractEnvRunner):
         mb_masks = mb_dones[:, :-1]
         mb_dones = mb_dones[:, 1:]
         mb_pos = np.asarray(mb_pos, dtype=self.pos.dtype)
+        mb_pos = mb_pos.swapaxes(0, 1).reshape(mb_pos.shape[0] * mb_pos.shape[1], mb_pos.shape[2])
         mb_nm = np.asarray(mb_nm, dtype=self.neural_map.dtype)
         mb_nm = mb_nm.swapaxes(0, 1).reshape(mb_nm.shape[0] * mb_nm.shape[1], *mb_nm.shape[2:])
         mb_nm_xy = np.asarray(mb_nm_xy, dtype=self.neural_map_xy.dtype)
@@ -139,4 +140,4 @@ class Runner(AbstractEnvRunner):
         mb_values = mb_values.flatten()
         mb_masks = mb_masks.flatten()
 
-        return mb_obs, mb_nm, mb_rewards, mb_nm_xy, mb_actions, mb_values, epinfos
+        return mb_obs, mb_nm, mb_rewards, mb_nm_xy, mb_actions, mb_values, mb_pos, epinfos
