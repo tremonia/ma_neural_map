@@ -250,7 +250,9 @@ def conv_only(convs=[(32, 8, 4), (64, 4, 2), (64, 3, 1)], **conv_kwargs):
 
 
 @register("neural_map")
-def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions, initializer='ortho_init'):
+def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions,
+               use_extended_write_op, lw_extended_args, initializer='ortho_init'):
+
     def neural_map_fn(X, nenv=1):
 
         def global_read(nm, gr_args, c_dim, initializer):
@@ -339,15 +341,36 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions, initializer='ortho
 
             return w
 
-        def final_nn(r, c, w, fnn_args, no_actions, initializer):
-            # input: r, c, w
+        def local_write_extended(s_flat, r, c, nm_xy, lw_extended_args, c_dim, initializer):
+            # input: flattened state (s_flat), r, c, neural map's feature vector(s) at position(s) x_i,y_i (nm_xy)
+            # output: c-dimensional local write candidate vector w_ex
+
+            activ = tf.nn.relu
+            last_activ = tf.tanh
+
+            # fc layer(s) specified by lw_args
+            h = tf.concat([s_flat, r, c, nm_xy], 1)
+            for i, nneurons in enumerate(lw_extended_args):
+                h = activ(fc(h, 'lw_extended_fc{}'.format(i), nh=nneurons, initializer=initializer, init_scale=np.sqrt(2)), 'lw_extended_fc_relu{}'.format(i))
+
+            # last fc layer that produces c-dimensional ouput w
+            if not lw_extended_args:
+                last_fcl_name = 'lw_extened_fc0'
+            else:
+                last_fcl_name = 'lw_extended_fc{}'.format(len(lw_extended_args))
+            w_ex = last_activ(fc(h, last_fcl_name, nh=c_dim, initializer=initializer, init_scale=np.sqrt(2)), 'lw_extended_fc_tanh')
+
+            return w_ex
+
+        def final_nn(input_final_nn, fnn_args, no_actions, initializer):
+            # input: r, c, w (and w_ex) concatenated
             # output: no_actions-dimensional vector
 
             activ = tf.nn.relu
             #softmax = tf.nn.softmax
 
             # fc layer(s) specified by lw_args
-            h = tf.concat([r, c, w], 1)
+            h = input_final_nn
             for i, nneurons in enumerate(fnn_args):
                 h = activ(fc(h, 'fnn_fc{}'.format(i), nh=nneurons, initializer=initializer, init_scale=np.sqrt(2)), 'fnn_fc_relu{}'.format(i))
 
@@ -366,19 +389,37 @@ def neural_map(nm_dims, gr_args, lw_args, fnn_args, nactions, initializer='ortho
 
         batch_size = X.shape[0]
 
-        M = tf.placeholder(tf.float32, [batch_size, nm_dims[2]])
         S = tf.placeholder(tf.float32, [batch_size, nm_dims[0], nm_dims[1], nm_dims[2]])
+
+        if use_extended_write_op:
+            M = tf.placeholder(tf.float32, [batch_size, 2, nm_dims[2]])
+            nm_xy, nm_xy_next = tf.split(value=M, num_or_size_splits=2, axis=1)
+            nm_xy = tf.reshape(nm_xy, [batch_size, nm_dims[2]])
+            nm_xy_next = tf.reshape(nm_xy_next, [batch_size, nm_dims[2]])
+        else:
+            M = tf.placeholder(tf.float32, [batch_size, nm_dims[2]])
 
         s_flat = tf.layers.flatten(X)
 
         r = global_read(S, gr_args, nm_dims[2], initializer=initializer)
         c = context_read(S, s_flat, r, nm_dims[2], initializer=initializer)
-        w = local_write(s_flat, r, c, M, lw_args, nm_dims[2], initializer=initializer)
-        output = final_nn(r, c, w, fnn_args, nactions, initializer=initializer)
+
+        if use_extended_write_op:
+            w = local_write(s_flat, r, c, nm_xy, lw_args, nm_dims[2], initializer=initializer)
+            w_ex = local_write_extended(s_flat, r, c, nm_xy_next, lw_extended_args, nm_dims[2], initializer=initializer)
+            input_final_nn = tf.concat([r, c, w, w_ex], 1)
+            w = tf.expand_dims(w, axis=1)
+            w_ex = tf.expand_dims(w_ex, axis=1)
+            w_update = tf.concat([w, w_ex], axis=1)
+        else:
+            w_update = local_write(s_flat, r, c, M, lw_args, nm_dims[2], initializer=initializer)
+            input_final_nn = tf.concat([r, c, w_update], 1)
+
+        output = final_nn(input_final_nn, fnn_args, nactions, initializer=initializer)
 
         initial_state = np.zeros(S.shape.as_list(), dtype=float)
 
-        return output, {'S':S, 'M':M, 'state':w, 'initial_state': initial_state}
+        return output, {'S':S, 'M':M, 'state':w_update, 'initial_state': initial_state}
     return neural_map_fn
 
 

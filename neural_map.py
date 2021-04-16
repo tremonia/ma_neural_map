@@ -168,8 +168,10 @@ def nm_config():
         alg_args['load_path'] = None
 
     # neural map's parameters
+    use_extended_write_op = False
+
     if env.split(':')[0] == 'neural_map_envs':
-        alg_args['nm_customization_args'] = {'use_nm_customization':True,
+        alg_args['nm_customization_args'] = {'use_extended_write_op':use_extended_write_op,
                                              'log_model_parameters':True,
                                              'log_path':log_path_global,
                                              'optimizer':'RMSProp',
@@ -188,6 +190,12 @@ def nm_config():
         # local write's args; list that contains the number of neurons in the fc layers
         # the last fc layer doesn't have to be specified and always has c_dim neurons
         alg_args['lw_args'] = [64, 64]
+
+        #WIP local write extended
+        alg_args['use_extended_write_op'] = use_extended_write_op
+        alg_args['lw_extended_args'] = [25, 11]
+
+
         # final nn's args; list that contains the number of neurons in the fc layers
         # the last fc layer doesn't have to be specified and always has nactions neurons
         alg_args['fnn_args'] = [64, 64]

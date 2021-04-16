@@ -125,12 +125,8 @@ def build_policy(env, policy_network, value_network=None,  normalize_observation
         network_type = policy_network
         policy_network = get_network_builder(network_type)(**policy_kwargs)
 
-    def policy_fn(nbatch=None, nsteps=None, sess=None, observ_placeholder=None, use_nm_customization=False):
-        if use_nm_customization:
-            print('policy_fn function uses neural map’s customization')
-            ob_space = spaces.Box(low=env.observation_space.low[0], high=env.observation_space.high[0], shape=(env.observation_space.shape[0]-3,), dtype=env.observation_space.dtype.name)
-        else:
-            ob_space = env.observation_space
+    def policy_fn(nbatch=None, nsteps=None, sess=None, observ_placeholder=None):
+        ob_space = spaces.Box(low=env.observation_space.low[0], high=env.observation_space.high[0], shape=(env.observation_space.shape[0]-3,), dtype=env.observation_space.dtype.name)
 
         X = observ_placeholder if observ_placeholder is not None else observation_placeholder(ob_space, batch_size=nbatch)
 
