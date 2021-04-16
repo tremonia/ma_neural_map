@@ -130,7 +130,7 @@ class Runner(AbstractEnvRunner):
             mb_advs[t] = lastgaelam = delta + self.gamma * self.lam * nextnonterminal * lastgaelam
         mb_returns = mb_advs + mb_values
 
-        return (*map(sf01, (mb_obs, mb_returns, mb_nm_xy, mb_actions, mb_values, mb_neglogpacs, mb_nm)), epinfos)
+        return (*map(sf01, (mb_obs, mb_returns, mb_nm_xy, mb_actions, mb_values, mb_neglogpacs, mb_nm, mb_pos)), epinfos)
 
 
 def sf01(arr):
