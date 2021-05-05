@@ -38,31 +38,34 @@ class One_Room_Many_Goals_2D(gym.Env):
         self.start_orientation = self.orientation = start_orientation  # down=0, right=1, up=2, left=3
 
         # determine random goal positions and place corresponding indicators in the map
-        goal1_index = np.random.random_integers(0,80)
-        while goal1_index == 40:
-            goal1_index = np.random.random_integers(0,80)
+        self.start_position_index = (start_position_y * map_size_horizontal) + start_position_x
+        self.max_goal_index = (map_size_horizontal * map_size_vertical) - 1
+
+        goal1_index = np.random.random_integers(0, self.max_goal_index)
+        while goal1_index == self.start_position_index:
+            goal1_index = np.random.random_integers(0, self.max_goal_index)
         self.goal1_position_x = (goal1_index % self.map_size_horizontal) + self.view_straightforward -1
         self.goal1_position_y = (goal1_index // self.map_size_vertical) + self.view_straightforward -1
         self.map[1, self.goal1_position_y, self.goal1_position_x] = 1.
 
-        goal2_index = np.random.random_integers(0,80)
+        goal2_index = np.random.random_integers(0, self.max_goal_index)
         while goal2_index == goal1_index:
-            goal2_index = np.random.random_integers(0,80)
+            goal2_index = np.random.random_integers(0, self.max_goal_index)
         self.goal2_position_x = (goal2_index % self.map_size_horizontal) + self.view_straightforward -1
         self.goal2_position_y = (goal2_index // self.map_size_vertical) + self.view_straightforward -1
         self.map[2, self.goal2_position_y, self.goal2_position_x] = 1.
 
-        goal3_index = np.random.random_integers(0,80)
+        goal3_index = np.random.random_integers(0, self.max_goal_index)
         while goal3_index == goal2_index:
-            goal3_index = np.random.random_integers(0,80)
+            goal3_index = np.random.random_integers(0, self.max_goal_index)
         self.goal3_position_x = (goal3_index % self.map_size_horizontal) + self.view_straightforward -1
         self.goal3_position_y = (goal3_index // self.map_size_vertical) + self.view_straightforward -1
         if self.no_goals > 2:
             self.map[3, self.goal3_position_y, self.goal3_position_x] = 1.
 
-        goal4_index = np.random.random_integers(0,80)
+        goal4_index = np.random.random_integers(0, self.max_goal_index)
         while goal4_index == goal3_index:
-            goal4_index = np.random.random_integers(0,80)
+            goal4_index = np.random.random_integers(0, self.max_goal_index)
         self.goal4_position_x = (goal4_index % self.map_size_horizontal) + self.view_straightforward -1
         self.goal4_position_y = (goal4_index // self.map_size_vertical) + self.view_straightforward -1
         if self.no_goals > 3:
@@ -199,31 +202,31 @@ class One_Room_Many_Goals_2D(gym.Env):
             self.map[4, self.goal4_position_y, self.goal4_position_x] = 0.
 
         # determine random goal positions and place corresponding indicators in the map
-        goal1_index = np.random.random_integers(0,80)
-        while goal1_index==40:
-            goal1_index = np.random.random_integers(0,80)
+        goal1_index = np.random.random_integers(0, self.max_goal_index)
+        while goal1_index==self.start_position_index:
+            goal1_index = np.random.random_integers(0, self.max_goal_index)
         self.goal1_position_x = (goal1_index % self.map_size_horizontal) + self.view_straightforward -1
         self.goal1_position_y = (goal1_index // self.map_size_vertical) + self.view_straightforward -1
         self.map[1, self.goal1_position_y, self.goal1_position_x] = 1.
 
-        goal2_index = np.random.random_integers(0,80)
+        goal2_index = np.random.random_integers(0, self.max_goal_index)
         while goal2_index==goal1_index:
-            goal2_index = np.random.random_integers(0,80)
+            goal2_index = np.random.random_integers(0, self.max_goal_index)
         self.goal2_position_x = (goal2_index % self.map_size_horizontal) + self.view_straightforward -1
         self.goal2_position_y = (goal2_index // self.map_size_vertical) + self.view_straightforward -1
         self.map[2, self.goal2_position_y, self.goal2_position_x] = 1.
 
-        goal3_index = np.random.random_integers(0,80)
+        goal3_index = np.random.random_integers(0, self.max_goal_index)
         while goal3_index==goal2_index:
-            goal3_index = np.random.random_integers(0,80)
+            goal3_index = np.random.random_integers(0, self.max_goal_index)
         self.goal3_position_x = (goal3_index % self.map_size_horizontal) + self.view_straightforward -1
         self.goal3_position_y = (goal3_index // self.map_size_vertical) + self.view_straightforward -1
         if self.no_goals > 2:
             self.map[3, self.goal3_position_y, self.goal3_position_x] = 1.
 
-        goal4_index = np.random.random_integers(0,80)
+        goal4_index = np.random.random_integers(0, self.max_goal_index)
         while goal4_index == goal3_index:
-            goal4_index = np.random.random_integers(0,80)
+            goal4_index = np.random.random_integers(0, self.max_goal_index)
         self.goal4_position_x = (goal4_index % self.map_size_horizontal) + self.view_straightforward -1
         self.goal4_position_y = (goal4_index // self.map_size_vertical) + self.view_straightforward -1
         if self.no_goals > 3:
