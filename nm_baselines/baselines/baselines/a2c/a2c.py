@@ -224,20 +224,10 @@ def learn(
 
     for update in range(1, total_timesteps//nbatch+1):
         # Get mini batch of experiences
-        obs, states, rewards, masks, actions, values, pos, epinfos = runner.run()
+        obs, states, rewards, masks, actions, values, pos, epinfos = runner.run(update)
         epinfobuf.extend(epinfos)
         policy_loss, value_loss, policy_entropy = model.train(obs, states, rewards, masks, actions, values)
         nseconds = time.time()-tstart
-
-        if nm_customization_args['log_model_parameters'] and epinfos:
-            for entry in epinfos:
-                ex.log_scalar('ep_reward', entry['r'])
-                ex.log_scalar('ep_length', entry['l'])
-
-        if update>249000 and update<250000:
-            ex.log_scalar('neural_map', states.tolist())
-            ex.log_scalar('obs', obs.tolist())
-            ex.log_scalar('pos', pos.tolist())
 
         # Calculate the fps (frame per second)
         fps = int((update*nbatch)/nseconds)

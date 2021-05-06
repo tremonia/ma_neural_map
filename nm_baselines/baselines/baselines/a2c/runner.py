@@ -2,6 +2,8 @@ import numpy as np
 from baselines.a2c.utils import discount_with_dones
 from baselines.common.runners import AbstractEnvRunner
 
+from exp import ex
+
 class Runner(AbstractEnvRunner):
     """
     We use this class to generate batches of experiences
@@ -19,7 +21,7 @@ class Runner(AbstractEnvRunner):
         self.batch_action_shape = [x if x is not None else -1 for x in model.train_model.action.shape.as_list()]
         self.ob_dtype = model.train_model.X.dtype.as_numpy_dtype
 
-    def run(self):
+    def run(self, update):
         # We initialize the lists that will contain the mb of experiences
         mb_obs, mb_rewards, mb_actions, mb_values, mb_dones, mb_pos, mb_nm, mb_nm_xy = [],[],[],[],[],[],[],[]
         epinfos = []
@@ -78,6 +80,22 @@ class Runner(AbstractEnvRunner):
             tmp, rewards, dones, infos = self.env.step(actions)
             obs = tmp[:,:-3]
             self.pos = tmp[:,-3:]
+
+            #if (update > 120000) and (update <= 125000):
+            step_offset = (update-1) * self.nsteps
+                #ex.log_scalar('neural_map', mb_nm[-1].tolist(), step_offset+n)
+                #ex.log_scalar('obs', mb_obs[-1].tolist(), step_offset+n)
+                #ex.log_scalar('pos', mb_pos[-1].tolist(), step_offset+n)
+                #ex.log_scalar('action', actions.tolist(), step_offset+n)
+                #ex.log_scalar('reward', rewards.tolist(), step_offset+n)
+                #ex.log_scalar('done', dones.tolist(), step_offset+n)
+                
+                #if 'goal_positions' in infos[0]:
+                    #ex.log_scalar('ep_goal_positions', infos[0]['goal_positions'], step_offset+n)
+
+            if 'episode' in infos[0]:
+                ex.log_scalar('ep_length', infos[0]['episode']['l'], step_offset+n)
+                ex.log_scalar('ep_reward', infos[0]['episode']['r'], step_offset+n)
 
             for info in infos:
                 maybeepinfo = info.get('episode')

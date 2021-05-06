@@ -1,6 +1,8 @@
 import numpy as np
 from baselines.common.runners import AbstractEnvRunner
 
+from exp import ex
+
 class Runner(AbstractEnvRunner):
     """
     We use this object to make a mini batch of experiences
@@ -18,12 +20,12 @@ class Runner(AbstractEnvRunner):
         # Discount rate
         self.gamma = gamma
 
-    def run(self):
+    def run(self, update):
         # Here, we init the lists that will contain the mb of experiences
         mb_obs, mb_rewards, mb_actions, mb_values, mb_dones, mb_neglogpacs, mb_pos, mb_nm, mb_nm_xy = [],[],[],[],[],[],[],[],[]
         epinfos = []
         # For n in range number of steps
-        for _ in range(self.nsteps):
+        for n in range(self.nsteps):
             # Given observations, get action value and neglopacs
             # We already have self.obs because Runner superclass run self.obs[:] = env.reset() on init
 
@@ -79,6 +81,20 @@ class Runner(AbstractEnvRunner):
             tmp, rewards, self.dones, infos = self.env.step(actions)
             self.obs = tmp[:,:-3]
             self.pos = tmp[:,-3:]
+            
+            if (update > 19300) and (update <= 19530):
+                step_offset = (update-1) * self.nsteps
+                #ex.log_scalar('neural_map', mb_nm[-1].tolist(), step_offset+n)
+                ex.log_scalar('obs', mb_obs[-1].tolist(), step_offset+n)
+                ex.log_scalar('pos', mb_pos[-1].tolist(), step_offset+n)
+                ex.log_scalar('action', actions.tolist(), step_offset+n)
+                ex.log_scalar('reward', rewards.tolist(), step_offset+n)
+                ex.log_scalar('done', dones.tolist(), step_offset+n)
+                #if 'goal_positions' in infos[0]:
+                    #ex.log_scalar('ep_goal_positions', infos[0]['goal_positions'], step_offset+n)
+                if 'episode' in infos[0]:
+                    ex.log_scalar('ep_length', infos[0]['episode']['l'], step_offset+n)
+                    ex.log_scalar('ep_reward', infos[0]['episode']['r'], step_offset+n)
 
             for info in infos:
                 maybeepinfo = info.get('episode')
