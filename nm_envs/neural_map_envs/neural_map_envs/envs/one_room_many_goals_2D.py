@@ -114,47 +114,31 @@ class One_Room_Many_Goals_2D(gym.Env):
                     raise ValueError
 
                 # determine reward, done and internal_state
-                if self.position_x == self.goal1_position_x and self.position_y == self.goal1_position_y:
-                    if self.internal_state == 'Empty':
-                        reward = self.goal_rewards[0]
-                        self.last_done = False
-                        self.internal_state = 'FoundGoal1'
-                    else:
-                        reward = 0.
-                        self.last_done = False
+                if (self.position_x == self.goal1_position_x) and (self.position_y == self.goal1_position_y) and (self.internal_state == 'Empty'):
+                    reward = self.goal_rewards[0]
+                    self.last_done = False
+                    self.internal_state = 'FoundGoal1'
 
-                elif self.position_x == self.goal2_position_x and self.position_y == self.goal2_position_y:
-                    if self.internal_state == 'FoundGoal1':
-                        reward = self.goal_rewards[1]
-                        if self.no_goals == 2:
-                            self.last_done = True
-                        else:
-                            self.last_done = False
-                        self.internal_state = 'FoundGoal2'
-                    else:
-                        reward = 0.
-                        self.last_done = False
-
-                elif self.position_x == self.goal3_position_x and self.position_y == self.goal3_position_y and self.no_goals > 2:
-                    if self.internal_state == 'FoundGoal2':
-                        reward = self.goal_rewards[2]
-                        if self.no_goals == 3:
-                            self.last_done = True
-                        else:
-                            self.last_done = False
-                        self.internal_state = 'FoundGoal3'
-                    else:
-                        reward = 0.0
-                        self.last_done = False
-
-                elif self.position_x == self.goal4_position_x and self.position_y == self.goal4_position_y and self.no_goals > 3:
-                    if self.internal_state == 'FoundGoal3':
-                        reward = self.goal_rewards[3]
+                elif (self.position_x == self.goal2_position_x) and (self.position_y == self.goal2_position_y) and (self.internal_state == 'FoundGoal1'):
+                    reward = self.goal_rewards[1]
+                    if self.no_goals == 2:
                         self.last_done = True
-                        self.internal_state = 'FoundGoal4'
                     else:
-                        reward = 0.
                         self.last_done = False
+                    self.internal_state = 'FoundGoal2'
+
+                elif (self.position_x == self.goal3_position_x) and (self.position_y == self.goal3_position_y) and (self.internal_state == 'FoundGoal2'):
+                    reward = self.goal_rewards[2]
+                    if self.no_goals == 3:
+                        self.last_done = True
+                    else:
+                        self.last_done = False
+                    self.internal_state = 'FoundGoal3'
+
+                elif (self.position_x == self.goal4_position_x) and (self.position_y == self.goal4_position_y) and (self.internal_state == 'FoundGoal3'):
+                    reward = self.goal_rewards[3]
+                    self.last_done = True
+                    self.internal_state = 'FoundGoal4'
 
                 else:
                     reward = 0.
@@ -188,9 +172,10 @@ class One_Room_Many_Goals_2D(gym.Env):
 
             self.step_counter += 1.
             reward -= self.living_reward
-
+            #if self.step_counter == 1.:
+            #    return {"position": np.array((int(self.position_x), int(self.position_y), int(self.orientation))), "observation": self.last_obs}, reward, self.last_done, {'goal_positions': [self.goal1_position_x, self.goal1_position_y, self.goal2_position_x, self.goal2_position_y, self.goal3_position_x, self.goal3_position_y, self.goal4_position_x, self.goal4_position_y]}
+            #else:
             return {"position": np.array((int(self.position_x), int(self.position_y), int(self.orientation))), "observation": self.last_obs}, reward, self.last_done, {}
-
 
     def reset(self):
         # first delete / reset old goal indicators
