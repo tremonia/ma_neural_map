@@ -1,3 +1,11 @@
 __pycache__/
 
 *.egg-info/
+*.aux/
+*.auxlock/
+*.bbl/
+*.fdb_latexmk/
+*.fls/
+*.log/
+*.out/
+*.toc/
