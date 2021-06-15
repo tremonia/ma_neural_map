@@ -1,0 +1,158 @@
+% HFT Vorlage
+% Author: Marius Brehler <marius.brehler@tu-dortmund.de>
+
+\documentclass[a4paper, DIV=14, BCOR8.0mm, 11pt, twoside, headsepline, bibliography=totoc, headinclude]{scrreprt}
+
+%\usepackage[none]{hyphenat}
+%\sloppy
+
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage[T1]{fontenc}
+%\usepackage{ae}
+\usepackage{lmodern}
+\usepackage{eufrak}
+
+
+
+%% Mathematik
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{trfsigns}
+
+%% Einheiten
+%\usepackage{units}
+\usepackage[output-decimal-marker={,},binary-units,per-mode=repeated-symbol]{siunitx}
+\DeclareSIUnit\dBm{dBm}
+\DeclareSIUnit\dB{dB}
+
+%% Grafiken
+\usepackage[pdftex]{graphicx}
+\DeclareGraphicsExtensions{.tif,.jpg,.pdf,.mps,.png}
+
+\usepackage{epstopdf}
+\usepackage[format=hang]{caption}
+\usepackage{subcaption}
+
+\usepackage{pgfplots}
+\pgfplotsset{compat=newest}
+\usepackage{tikz}
+\usepackage{tikzscale}
+\usetikzlibrary{mindmap,trees}
+\usetikzlibrary{external}
+
+% Tikz dauert ewig... hier kann man die Graphiken als externe PDFs ablegen.
+% Ändert man die Tikz Dateien müssen die PDFs allerdings auch gelöscht werden um neu generiert zu werden.
+\tikzexternalize[prefix=externalized_tikz/]
+\pgfkeys{
+   /pgf/number format/.cd,
+      set decimal separator={,{\!}},
+      set thousands separator={}
+}
+
+
+%% Bibliography
+\usepackage[numbers]{natbib}
+\citestyle{dinat}
+
+
+%% Sonstiges
+\usepackage{placeins}	% \FloatBarrier
+\usepackage{float}
+%\usepackage{fancyhdr}	% Zur Gestaltung Header
+\usepackage[linkbordercolor={1 1 1}, citebordercolor={1 1 1}, pdfborder={0 0 0}, plainpages=false]{hyperref}        % Hyperlinks korrekt einfärben (unsichtbar)
+%\usepackage[hidelinks]{hyperref}
+\usepackage{multirow}	% Multirow Tabellen
+
+\usepackage{url}
+
+\usepackage[printonlyused]{acronym}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{abstract}
+
+%%% Appendix namen setzen
+\usepackage{appendix}
+\renewcommand{\appendixtocname}{Anhang}
+\renewcommand{\appendixpagename}{Anhang}
+
+
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\numberwithin{figure}{chapter}
+\numberwithin{table}{chapter}
+
+
+%------ Formatierungen------------
+\setlength{\parindent} {0pt}
+%\setlength{\parskip} {12pt}
+\setlength{\parskip}{8pt plus 2pt minus 1pt}
+
+\setlength{\arraycolsep}{0.5pt}
+
+
+
+\usepackage{pdfpages}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+%%% Titel
+\KOMAoptions{open=right}
+\pagenumbering{roman}
+
+\include{titel}
+\cleardoublepage
+
+\include{abstract}
+\cleardoublepage
+
+%%% Inhaltsverzeichnis
+\pagestyle{plain}
+\setcounter{page}{1}
+\tableofcontents
+
+
+\newpage{~}
+\thispagestyle{empty}
+\clearpage
+
+\pagestyle{headings}
+\pagenumbering{arabic}
+
+
+%%% Kapitel
+\include{kapitel/einleitung}
+\include{kapitel/grundlagen}
+\include{kapitel/experimente}
+\include{kapitel/fazit}
+
+%%% Literaturverzeichnis
+\bibliographystyle{unsrtdin}	% eventuell durch andere Vorlage ersetzen
+\bibliography{bibtex/literatur}
+
+
+%%% Anhang
+\cleardoublepage
+\appendix
+\renewcommand{\theequation}{\Alph{chapter}.\arabic{equation}}
+\renewcommand{\thetable}{\Alph{chapter}.\arabic{table}}
+\renewcommand{\thefigure}{\Alph{chapter}.\arabic{figure}}
+\setcounter{equation}{0}
+\setcounter{table}{0}
+
+%\include{anhang/abbildungen}
+\include{anhang/abkuerzungen}
+
+
+%%% Eidesstattliche Versicherung
+%%\null
+%%\thispagestyle{plain}
+\cleardoublepage
+%\addcontentsline{toc}{chapter}{Eidesstattliche Versicherung}
+
+% Erst zum Ende einkommentieren, sonst gibts Probleme beim externalisieren von TiKz Graphiken.
+%\includepdf[pages=1,scale=0.9,pagecommand={\thispagestyle{plain}}]{anhang/Eidesstattliche_Versicherung.pdf}
+
+
+\end{document}

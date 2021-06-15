@@ -1,0 +1,39 @@
+\chapter{Implementierungen und Experimente}
+
+Im folgenden Kapitel soll die Neural Map in mehreren Experimenten untersucht werden. Da hierfür eine Implementierung der Neural Map benötigt wird, werden zunächst die Details dieser präsentiert. Im Anschluss daran wird die für die Experimente verwendete Umgebung erörtert.
+
+\section{Implementierung der Neural Map}
+
+Für die Implementierung des PPO Algorithmus wird auf das OpenAI Baseline Paket zurückgegriffen. Dieses enthält eine Vielzahl an RL Algorithmen, unter anderem auch PPO. Ziel bei der Entwicklung des Pakets war es laut OpenAI Forschungen im Bereich RL vergleichbarer und reproduzierbarer zu machen. Dementsprechend wurde die korrekte Funktionalität der Algorithmen überprüft. Die Implementierung geschah in Python, sodass das Paket relativ einfach zu benutzen ist. Die Berechnungen innerhalb der Algorithmen werden mit Tensorflow durchgeführt. Dadurch ergibt sich die Möglichkeit, die Berechnungen auch auf einer Grafikkarte auszuführen, wodurch sich die Rechenzeit bzw. Trainingszeit verringern lässt. Infolgedessen ist es aber auch notwendig, dass die Implementierung der Neural Map, wie sie im folgenden Abschitt beschrieben wird, in Tensorflow erfolgt.
+
+PPO im wesentlichen so wie im Kapitel davor beschrieben. Optimizer ist Adam. GAE beschreiben
+
+Die im Rahmen dieser Arbeit verwendete Implementierung der Neural Map folgt im Wesentlichen den Gleichungen XXX wie sie Abschnitt XXX beschrieben wurden. Damit die Implementierung kompatibel zum zuvor erwähnten OpenAI Baseline Paket ist, wurde sie entsprechend in Tensorflow durchgeführt. Da die Autoren des Neural Map Papers keine Angaben zu der Architektur des Neuronalen Netwerks für den $write$ Operators gemacht haben, wird für diese Arbeit folgende Architektur verwendet. Das Netz besteht aus drei Fully Connected Layern, wovon die ersten beiden über jeweils XXX Neuronen verfügen und die letzte Schicht YYY Neuronen enhält, um entsprechend den C-dimensionalen Outputvektor zu produzieren. Als Aktivierungsfunktion wird in den ersten beiden Schichten die relu-Funktion verwendet, in der letzten Schicht wird tanh benutzt. Die Struktur des Neuronalen Netzes $f$, das den Policy Output der Neural Map generiert, wurde ebenfalls nicht genauer spezifiziert. Somit musste sie vom Autor dieser Arbeit auch selbst gewählt werden. Das Netz $f$ besteht aus zwei Fully Connected Layern mit jeweils XXX Neuronen. Beide Schichten benutzen die relu-Funktion als Aktivierungsfunktion. Die gewichte aller Schichten wurden mittels XXX initialisiert.
+
+Es sollte noch erwähnt werden, dass das OpenAI Baseline Paket den Output des Netzes $f$ noch mit zwei weiteren Fully Connected Layern prozessiert, um auf diese Weise zum einen den Policy Output zu generieren und zum anderen die Value function zu schätzen.
+
+Map-Update außerhalb des Tensorflow Modells.
+
+Erweiterung des Schreiboperators
+
+\section{Umgebung \glqq One\_Room\_Many\_Goals\grqq}
+
+Die Umgebung \glqq One\_Room\_Many\_Goals\_2D\grqq{} ist eine 2D-Umgebung und besteht aus einem Raum, d.h. einer rechteckigen hindernisfreien Fläche, die von einer durchgehenden Mauer umgeben ist. In diesem Raum werden zu Beginn jeder Episode wahlweise $2$, $3$ oder $4$ Ziele platziert. Jedes Ziel hat eine eindeutige Nummer zwischen $1$ und $4$. Die Positionen der Ziele werden für jede Episode zufällig neu bestimmt. Dabei gelten folgende Regeln. Zwei aufeinander folgende Ziele dürfen nicht an derselben Position sein, d.h. Ziel 2 darf nicht auf Ziel 1 liegen, Ziel 3 nicht auf Ziel 2 und Ziel 4 nicht auf Ziel 3. Außerdem darf Ziel 1 nicht gleich mit der Startposition des Agenten sein. Der Agent wird zu Beginn jeder Episode auf einer fixen Startposition in der Mitte des Raumes positioniert. Die genauen Koordinaten der Startposition sind von der Größe des Raumes abhängig. Die initiale Blickrichtung des Agenten ist ebenfalls immer gleich, er guckt nach unten. Ein beispielhafter Episodenbeginn für einen Raum der Größe $XXX \times YYY$ mit 4 Zielen ist in Abbildung XXX dargestellt. Die Aufgabe des Agenten besteht dann darin, die Ziele in korrekter Reihenfolge abzulaufen, also zuerst Ziel 1, dann Ziel 2, usw. Hierfür erhält er in Abhängigkeit der Anzahl der Ziele eine entsprechende positive Belohnung, die in Tabelle \ref{belohnung_ormg} detailliert dargestellt ist. Zum Erledigen der Aufgabe stehen dem Agenten maximal $XXX$ Schritte zur Verfügung. Beim Erreichen des Schrittlimits erreicht er automatisch einen Terminalzustand und erhält für diesen eine Bestrafung von $-XXX$. Darüber hinaus erhält der Agent für jeden getätigten Schritt einen sogenannten Live-Reward von $XXX = YYY / Maximale Schrittanzahl$.
+
+\begin{table}[h]
+  \begin{tabular}{|>{\centering}m{1.6cm}|>{\centering}m{3cm}|>{\centering}m{3cm}|>{\centering}m{3cm}|>{\centering}m{3cm}|} \hline
+    Anzahl Ziele & Belohnung Ziel 1 & Belohnung Ziel 2 & Belohnung Ziel 3 & Belohnung Ziel 4 \tabularnewline \hline
+    2 & 0.3 & 0.7 & - & - \tabularnewline \hline
+    3 & 0.125 & 0.125 & 0.75 & - \tabularnewline \hline
+    4 & 0.1 & 0.1 & 0.1 & 0.7 \tabularnewline \hline
+  \end{tabular}
+  \caption{Übersicht über die Belohnungsstruktur der Umgebung \glqq One\_Romm\_Many\_Goals \grqq{} in Abhängigkeit der Anzahl der Ziele.}
+  \label{belohnung_ormg}
+\end{table}
+
+Dem Agenten stehen in jedem Schritt drei mögliche Aktionen zur Verfügung: Gehe einen Schritt bzw. Feld nach vorne, also in Blickrichtung, oder drehe dich um $90\degree$ nach links oder rechts. Wenn der Agent vor sich eine Mauer hat und trotzdem einen Schritt nach vorne macht, so verändert sich seine Position nicht. Der Zustand $s_t$ ist ein Teilauschnitt der Umgebung in der Größe $(Anzahl\_Ziele + 1) \times 4 \times 3$. Das bedeutet, dass der Agent $4$ Felder geradeaus bzw. in Blickrichtung weit sehen. Zur Seite kann er jeweils 1 Feld sehen, sodass sich mit den Feldern links und rechts des Agenten sowie seinem eigenen die $3$ ergibt. Informationen über die Objekte der Umgebung, d.h. die Wände und die Ziele, sind in Analogie zum Neural Map Paper in 5 binärkodierten Kanälen enthalten. Dabei enthält der erste Kanal Informationen über die Lage der Wände. Hierbei entspricht eine $1$ einem Feld mit einer Wand und eine $0$ einem freien Feld. Die Kanäle $2$ bis $5$ spezifizieren die Positionen der entsprechenden Ziele. Dazu enthält der jeweilige Kanal genau eine $1$ an der Position des Ziels, alle anderen Einträge des Kanals sind $0$. In Abbildung XXX wird der Zusammenhang zwischem dem Teilauschnitt der Umgebung und dem daraus resultierenden binärkodierten Zustand $s_t$ anhand zweier Beispiele verdeutlicht.
+
+Folgende Überlegungen spielten beim Design der Umgebung eine Rolle. Durch die zufällige Positionierung der Ziele muss der Agent in jeder Episode aufs Neue den Raum erkunden. Mit einer zunehmenden Anzahl an Zielen steigt dabei auch die Wahrscheinlichkeit ein Ziel zu beobachten, was noch nicht an der Reihe ist. So kann der Agent beispielsweise Ziel 4 bereits finden, obwohl er noch auf der Suche nach Ziel 2 ist. Diese Information ist in dem Moment zwar noch nicht von Relevanz, wird es jedoch im weiteren Verlauf. Somit wäre es wünschenswert, wenn der Agent seine Beobachtung in der Neural Map abspeichern könnte, um sie dann zu einem späteren Zeitpunkt abrufen zu können. Ob dies möglich ist, soll im Rahmen des folgenden Experiments eruiert werden. Hierbei ist insbesondere von Interesse, ob sich die Neural Map beim Speichern solcher Informationen unterschiedlich verhält, je nachdem ob der Agent ein späteres Ziel \glqq nur \grqq{} sieht oder ob er drüber läuft, d.h. sich an derselben Position wie das spätere Ziel befindet.
+
+
+\section{Experimente}
