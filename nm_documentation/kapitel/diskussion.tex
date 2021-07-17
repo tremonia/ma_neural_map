@@ -2,7 +2,7 @@
 \label{chap_disc}
 
 
-Bei der Betrachtung aller Ergebnisse aus den RL Experimenten kann zunächst festgestellt werden, dass die Erweiterung des Schreiboperators zu einer Verbesserung der Ergebnisse führt. Darüber hinaus wirkt sich die Verwendung der GRU-basierten Schreiboperation positiv auf die Resultate aus, wenn die Aufgabenstellung schwieriger wird. Dies gilt sowohl für die Grundvariante der Neural Map als auch für die Variante mit der Erweiterung des Schreiboperators. Lediglich im Rahmen des separaten Speichertests konnte anhand der dort verwendeten Bewertungskriterien kein Unterschied zwischen der Grundvariante und der Erweiterung festgestellt werden.
+Bei der Betrachtung aller Ergebnisse aus den RL Experimenten kann zunächst festgestellt werden, dass die Erweiterung des Schreiboperators zu einer Verbesserung der Ergebnisse führt. Darüber hinaus wirkt sich die Verwendung der GRU-basierten Schreiboperation positiv auf die Resultate aus, wenn die Aufgabenstellung schwieriger wird. Dies gilt sowohl für die Grundvariante der Neural Map als auch für die Variante mit der Erweiterung des Schreiboperators. Außerdem erzielen alle betrachteten Varianten der Neural Map bessere Ergebnisse als die Referenz, das LSTM. Lediglich im Rahmen des separaten Speichertests konnte anhand der dort verwendeten Bewertungskriterien kein Unterschied zwischen der Grundvariante und der Erweiterung festgestellt werden.
 
 In Abschnitt XXX wurden die Ergebnisse zur detaillierten Analyse in drei Mengen eingeteilt.
 
@@ -23,6 +23,39 @@ Im Folgenden soll erklärt werden, warum die zusätzliche Schrittanzahl in den M
 Obwohl die ursprüngliche Einteilung in drei Mengen für diese Umgebung verworfen wurde, liegen die Einteilungen für drei Mengen dennoch vor. Dabei war insbesondere auffällig, dass bei drei Zielen die GRU-basierten Varianten mehrere Hundert Episoden in der Menge \glqq Ziel 2 gesehen\grqq{} hätten. Es gelingt diesen Varianten somit häufiger spätere Ziele nicht abzulaufen, sondern sich mit ihrem Anblick zu genügen. Dies könnte eine Erklärung dafür sein, warum die entsprechenden Varianten in diesem Experiment die besten Ergebnisse liefern.
 
 
+Die Ergebnisse aus dem 3D-Experiment bekräftigen die zuvor gewonnen Erkenntnisse hinsichtlich der Verbesserung durch die Erweiterung des Schreiboperators und der Verwendung der GRU-basierten Schreiboperation.
+
 
 
 Im folgenden soll ergründet werden, warum innerhalb des Speichertests keine Verbesserung durch die Erweiterung des Schreiboperators festgestellt wurde. Durch die Fähigkeit des erweiterten Schreiboperators auch nicht freie Felder zu beschreiben, besteht die Möglichkeit, auch Hindernisse, in diesem Fall Wände, korrekt auf der Karte zu verzeichnen. Um zu überprüfen, ob dies auch tatsächlich funktioniert, werden sich die geschätzten Umgebungsvektoren der nicht freien Felder angesehen. Dabei ergibt sich, dass die Wände korrekt abgebildet werden, d.h. der nullte Kanal enthält entsprechend eine Eins und alle anderen Kanäle eine Null. Somit kann der Karte, die von der Neural Map mit der Erweiterung des Schreiboperators erzeugt wird, eine höhere Qualität attestiert werden als der Karte der Grundvariante. Diese Aussage kann mit den ursprünglichen Bewertungskriterien nicht gewonnen werden, da diese aus Gründen der Vergleichbarkeit nur Felder berücksichtigt, die von beiden betrachteten Neural Map Varianten beschrieben werden können. Allerdings können auch nicht freie Felder wichtige Informationen über die Umgebung enthalten. So könnte beispielsweise auf einem nicht freien Feld eine verschlossene Tür sein, die sich im weiteren Verlauf noch öffnet.
+
+
+
+\begin{figure}[ht!]
+  %\centering
+  \begin{subfigure}[c]{0.5\textwidth}
+    %\centering
+    \includegraphics[keepaspectratio,width=\textwidth]{abbildungen/sample_not_seen.pdf}
+    \subcaption{}
+    \label{sample_visited}
+  \end{subfigure}
+  \begin{subfigure}[c]{0.5\textwidth}
+    %\centering
+    \includegraphics[keepaspectratio,width=\textwidth]{abbildungen/sample_visited.pdf}
+    \subcaption{}
+    \label{sample_visited}
+  \end{subfigure}
+  \begin{subfigure}[c]{0.5\textwidth}
+    %\centering
+    \includegraphics[keepaspectratio,width=\textwidth]{abbildungen/sample_seen.pdf}
+    \subcaption{}
+    \label{sample_seen2}
+  \end{subfigure}
+  \begin{subfigure}[c]{0.5\textwidth}
+    %\centering
+    \includegraphics[keepaspectratio,width=\textwidth]{abbildungen/sample_seen2.pdf}
+    \subcaption{}
+    \label{sample_seen2}
+  \end{subfigure}
+  \caption{Blub}
+\end{figure}
