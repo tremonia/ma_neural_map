@@ -394,6 +394,7 @@ Ebenfalls wird wieder der Weg von Ziel 2 zu Ziel 3 detaillierter analysiert und 
 
 
 \section{3D-Experiment}
+\label{sec_3d_exp}
 
 Nachdem zuvor das Verhalten der Neural Map in verschiedenen 2D-Umgebungen ausführlich untersucht wurde, soll nun eine 3D-Umgebung verwendet werden. Hierbei soll geklärt werden inwiefern, die Ergebnisse aus den 2D-Umgebungen auch in einer 3D-Umgebung bestand haben.
 
@@ -440,6 +441,7 @@ Die Durchschnittswerte des Rewards und der Episodenlänge über die erfolgreiche
 \end{table}
 
 \section{Untersuchung der Neural Map als reine Speicherstruktur}
+\label{sec_mem_test}
 
 Im folgenden Experiment soll die Neural Map außerhalb des bisherigen RL Kontexts untersucht werden. Es soll herausgefunden werden, inwiefern sich die Neural Map als reine Speicherstruktur nutzen lässt. Hierbei ist insbesondere von Interesse, inwiefern die Neural Map in ihrem internen Speicher eine Karte der Umgebung generieren kann. Um dies zu ergründen, wird eine leicht abgeänderte Form der Neural Map im Supervised Lernkontext betrachtet. Dazu werden folgende Annahmen getätigt. Zunächst wird wie in den 2D-Experimenten die vertikale und horizontale Größe des internen Speichers entsprechend der Umgebungsgröße gewählt. Somit entspricht eine Position in der Umgebung exakt einer Speicherposition. Die Informationen über die Umgebung, d.h. das Vorhandensein von Wänden bzw. freien Feldern und die Lage der Ziele, sind wie in den Abschnitten \ref{subsec_ormg} und \ref{subsec_fwmg} beschrieben binär kodiert. Daraus ergibt sich, dass für jede Position der Umgebung ein entsprechend binärkodierter Umgebungsvektor existiert. Da es zu jeder Position in der Umgebung genau eine Position im internen Speicher gibt und sich das Feature an dieser Speicherposition nur durch seine Dimensionalität von dem Umgebungsvektor unterscheidet, wird das Feature als kodierte Form des Umgebungsvektors angesehen. Dabei ist die Kodierung zunächst unbekannt. Auf Basis dieser Annahmen wird für das Experiment eine leicht modifizierte Variante der Neural Map erstellt. Diese erhält als Eingabe wie gehabt eine Observation $s_t$ und den aktuellen Inhalt des internen Speichers $M_t$ und schätzt auf Basis dieser den Umgebungsvektor an der entsprechenden Position $(x_t, y_t)$. Im Fall der Neural Map mit der Erweiterung des Schreibvektors wird zusätzlich auch noch der Umgebungsvektor an der Position $(x_{ext_t},y_{ext_t})$ geschätzt. Im Folgenden wird wegen der besseren Lesbarkeit darauf verzichtet, immer darauf hinzuweisen, dass in Abhängigkeit der Benutzung des erweiterten Schreiboperators wahlweise ein oder zwei Vektoren von der modifizierten Variante der Neural Map geschätzt bzw. erzeugt werden.
 
